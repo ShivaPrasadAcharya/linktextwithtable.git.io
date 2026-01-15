@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Multi-Table Data Display</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.8;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            padding: 50px;
+            border-radius: 12px;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.25);
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 40px;
+            text-align: center;
+            font-size: 2.5em;
+            font-weight: 600;
+        }
+
+        h2 {
+            color: #34495e;
+            margin-bottom: 25px;
+            font-size: 1.8em;
+            font-weight: 500;
+        }
+
+        .content-section {
+            margin-bottom: 50px;
+            padding: 35px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 5px solid #667eea;
+        }
+
+        .interactive-text {
+            font-size: 20px;
+            line-height: 2;
+            color: #2c3e50;
+            letter-spacing: 0.3px;
+        }
+
+        .highlight {
+            position: relative;
+            display: inline-block;
+            color: #3498db;
+            font-weight: normal;
+            cursor: pointer;
+            text-decoration: none;
+            border-bottom: 1px solid #3498db;
+            transition: all 0.3s ease;
+        }
+
+        .highlight:hover {
+            color: #2980b9;
+            border-bottom-color: #2980b9;
+        }
+
+        .tooltip {
+            display: none;
+            position: absolute;
+            bottom: 130%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            width: 340px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.35);
+            z-index: 1000;
+        }
+
+        .tooltip.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+
+        .tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 10px solid transparent;
+            border-top-color: #2c3e50;
+        }
+
+        .tooltip-header {
+            font-size: 12px;
+            color: #95a5a6;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .tooltip-content {
+            margin-bottom: 15px;
+            font-size: 15px;
+            line-height: 1.6;
+            padding: 10px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 6px;
+        }
+
+        .remark-link {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: bold;
+            cursor: pointer;
+            display: inline-block;
+            padding: 8px 16px;
+            background: white;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .remark-link:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .remark-text {
+            display: none;
+            margin-top: 12px;
+            padding: 12px;
+            background: white;
+            border-left: 4px solid #667eea;
+            border-radius: 6px;
+            color: #2c3e50;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .remark-text.visible {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                max-height: 0;
+            }
+            to {
+                opacity: 1;
+                max-height: 200px;
+            }
+        }
+
+        .controls {
+            margin: 30px 0;
+            text-align: center;
+        }
+
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 17px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin: 0 8px;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:hover {
+            background: #764ba2;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+        }
+
+        .table-section {
+            margin-top: 40px;
+            display: none;
+        }
+
+        .table-section.visible {
+            display: block;
+            animation: fadeInUp 0.4s ease;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .table-container {
+            margin-bottom: 50px;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 5px solid #667eea;
+        }
+
+        .format-tabs {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            padding: 12px 24px;
+            background: #e8e8e8;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 15px;
+            color: #555;
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .tab-btn:hover:not(.active) {
+            background: #d5d5d5;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 25px;
+            background: #2c3e50;
+            border-radius: 10px;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            color: #ecf0f1;
+            line-height: 1.6;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .back-to-top {
+            position: fixed;
+            bottom: 35px;
+            right: 35px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            font-size: 26px;
+            box-shadow: 0 6px 25px rgba(102, 126, 234, 0.5);
+            transition: all 0.3s ease;
+            opacity: 0;
+            visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .back-to-top.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .back-to-top:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.6);
+        }
+
+        .note {
+            margin-top: 20px;
+            padding: 15px 20px;
+            background: #e8f4f8;
+            border-left: 4px solid #3498db;
+            border-radius: 6px;
+            font-size: 15px;
+            color: #2c3e50;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 id="top">📊 Interactive Multi-Table Data Display System</h1>
+
+        <div class="content-section">
+            <h2>System Analysis Report</h2>
+            <p class="interactive-text">
+                The system has processed multiple data entries across different validation tables. From Table 1, item <a class="highlight" data-table="T1" data-id="1.0">T1-1.0</a> has been validated successfully. Entry <a class="highlight" data-table="T1" data-id="2.0">T1-2.0</a> demonstrates improved metrics. The testing phase included <a class="highlight" data-table="T1" data-id="3.0">T1-3.0</a> which revealed important insights. From the security validation table, authentication module <a class="highlight" data-table="T2" data-id="1.0">T2-1.0</a> passed security audits. The encryption framework <a class="highlight" data-table="T2" data-id="2.0">T2-2.0</a> meets compliance standards. The access control system <a class="highlight" data-table="T2" data-id="3.0">T2-3.0</a> demonstrates robust implementation.
+            </p>
+            <div class="note">
+                <strong>💡 Tip:</strong> Click on any blue reference (T1-1.0, T1-2.0, T2-1.0, etc.) to view detailed information and remarks. Click elsewhere to close.
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn" onclick="toggleTable('T1')">
+                <span id="toggleTextT1">Show Table T1</span>
+            </button>
+            <button class="btn" onclick="toggleTable('T2')">
+                <span id="toggleTextT2">Show Table T2</span>
+            </button>
+        </div>
+
+        <div class="table-section" id="tableSectionT1">
+            <div class="table-container">
+                <h2 id="dataTableT1">Table T1: System Validation Data</h2>
+                
+                <div class="format-tabs">
+                    <button class="tab-btn active" onclick="showFormat('T1', 'json')">JSON</button>
+                    <button class="tab-btn" onclick="showFormat('T1', 'csv')">CSV</button>
+                    <button class="tab-btn" onclick="showFormat('T1', 'markdown')">Markdown</button>
+                </div>
+
+                <div id="T1-json" class="tab-content active"></div>
+                <div id="T1-csv" class="tab-content"></div>
+                <div id="T1-markdown" class="tab-content"></div>
+            </div>
+        </div>
+
+        <div class="table-section" id="tableSectionT2">
+            <div class="table-container">
+                <h2 id="dataTableT2">Table T2: Security Validation Data</h2>
+                
+                <div class="format-tabs">
+                    <button class="tab-btn active" onclick="showFormat('T2', 'json')">JSON</button>
+                    <button class="tab-btn" onclick="showFormat('T2', 'csv')">CSV</button>
+                    <button class="tab-btn" onclick="showFormat('T2', 'markdown')">Markdown</button>
+                </div>
+
+                <div id="T2-json" class="tab-content active"></div>
+                <div id="T2-csv" class="tab-content"></div>
+                <div id="T2-markdown" class="tab-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <button class="back-to-top" id="backToTop" onclick="scrollToTop()">↑</button>
+
+    <script>
+        let currentActiveTooltip = null;
+
+        // Python-style data structure embedded in JavaScript
+        const tableData = {
+            "T1": [
+                {
+                    "IID": "1.0",
+                    "TEXT": "This is the primary content entry that serves as the baseline for all subsequent validations and quality checks.",
+                    "REMARK": "This entry passed all validation checks and meets the expected quality standards for production deployment."
+                },
+                {
+                    "IID": "2.0",
+                    "TEXT": "Secondary validation entry containing enhanced metadata and additional context for comprehensive system analysis.",
+                    "REMARK": "This entry shows improved performance metrics compared to baseline and is approved for integration."
+                },
+                {
+                    "IID": "3.0",
+                    "TEXT": "Critical test case data demonstrating system behavior under edge conditions and stress scenarios.",
+                    "REMARK": "Edge case testing revealed minor inconsistencies that require monitoring in production environment."
+                }
+            ],
+            "T2": [
+                {
+                    "IID": "1.0",
+                    "TEXT": "Primary authentication module implementing multi-factor authentication with biometric support and OAuth integration.",
+                    "REMARK": "Security audit completed successfully. All authentication flows meet industry standards and compliance requirements."
+                },
+                {
+                    "IID": "2.0",
+                    "TEXT": "End-to-end encryption system using AES-256 with RSA key exchange and perfect forward secrecy implementation.",
+                    "REMARK": "Encryption strength verified through penetration testing. No vulnerabilities detected in current implementation."
+                },
+                {
+                    "IID": "3.0",
+                    "TEXT": "Role-based access control (RBAC) system with granular permissions and audit logging capabilities.",
+                    "REMARK": "Access control policies validated against security framework. All permission hierarchies properly implemented."
+                }
+            ]
+        };
+
+        // Python-inspired conversion functions
+        function toJSON(tableName) {
+            return JSON.stringify(tableData[tableName], null, 2);
+        }
+
+        function toCSV(tableName) {
+            const data = tableData[tableName];
+            let csv = 'IID,TEXT,REMARK\n';
+            data.forEach(row => {
+                const text = row.TEXT.replace(/"/g, '""');
+                const remark = row.REMARK.replace(/"/g, '""');
+                csv += `${row.IID},"${text}","${remark}"\n`;
+            });
+            return csv;
+        }
+
+        function toMarkdown(tableName) {
+            const data = tableData[tableName];
+            let md = '| IID | TEXT | REMARK |\n|---|---|---|\n';
+            data.forEach(row => {
+                md += `| ${row.IID} | ${row.TEXT} | ${row.REMARK} |\n`;
+            });
+            return md;
+        }
+
+        function getData(tableName, id) {
+            return tableData[tableName].find(row => row.IID === id);
+        }
+
+        // Initialize format conversions on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            ['T1', 'T2'].forEach(table => {
+                document.getElementById(`${table}-json`).textContent = toJSON(table);
+                document.getElementById(`${table}-csv`).textContent = toCSV(table);
+                document.getElementById(`${table}-markdown`).textContent = toMarkdown(table);
+            });
+
+            // Create tooltips dynamically
+            document.querySelectorAll('.highlight').forEach(highlight => {
+                const table = highlight.getAttribute('data-table');
+                const id = highlight.getAttribute('data-id');
+                const data = getData(table, id);
+                
+                if (data) {
+                    const tooltip = document.createElement('span');
+                    tooltip.className = 'tooltip';
+                    tooltip.innerHTML = `
+                        <div class="tooltip-header">Table ${table} - ID ${id}</div>
+                        <div class="tooltip-content">${data.TEXT}</div>
+                        <a class="remark-link" onclick="toggleRemark(event)">View Remark</a>
+                        <div class="remark-text">${data.REMARK}</div>
+                    `;
+                    highlight.appendChild(tooltip);
+                }
+            });
+        });
+
+        function toggleRemark(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            const remarkText = event.target.nextElementSibling;
+            remarkText.classList.toggle('visible');
+        }
+
+        function toggleTable(tableId) {
+            const tableSection = document.getElementById(`tableSection${tableId}`);
+            const toggleText = document.getElementById(`toggleText${tableId}`);
+            
+            if (tableSection.classList.contains('visible')) {
+                tableSection.classList.remove('visible');
+                toggleText.textContent = `Show Table ${tableId}`;
+            } else {
+                tableSection.classList.add('visible');
+                toggleText.textContent = `Hide Table ${tableId}`;
+                setTimeout(() => {
+                    document.getElementById(`dataTable${tableId}`).scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
+            }
+        }
+
+        function showFormat(tableId, format) {
+            const tabs = document.querySelectorAll(`#tableSection${tableId} .tab-content`);
+            const buttons = document.querySelectorAll(`#tableSection${tableId} .tab-btn`);
+            
+            tabs.forEach(tab => tab.classList.remove('active'));
+            buttons.forEach(btn => btn.classList.remove('active'));
+            
+            document.getElementById(`${tableId}-${format}`).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function scrollToTop() {
+            document.getElementById('top').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Handle tooltip click interactions
+        document.querySelectorAll('.highlight').forEach(highlight => {
+            highlight.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const tooltip = this.querySelector('.tooltip');
+                
+                // Close previously active tooltip
+                if (currentActiveTooltip && currentActiveTooltip !== tooltip) {
+                    currentActiveTooltip.classList.remove('active');
+                    const prevRemark = currentActiveTooltip.querySelector('.remark-text');
+                    if (prevRemark) {
+                        prevRemark.classList.remove('visible');
+                    }
+                }
+                
+                // Toggle current tooltip
+                tooltip.classList.toggle('active');
+                
+                // Update current active tooltip
+                if (tooltip.classList.contains('active')) {
+                    currentActiveTooltip = tooltip;
+                } else {
+                    currentActiveTooltip = null;
+                }
+            });
+        });
+
+        // Close tooltip when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.highlight')) {
+                if (currentActiveTooltip) {
+                    currentActiveTooltip.classList.remove('active');
+                    const remark = currentActiveTooltip.querySelector('.remark-text');
+                    if (remark) {
+                        remark.classList.remove('visible');
+                    }
+                    currentActiveTooltip = null;
+                }
+            }
+        });
+
+        // Back to top button visibility
+        window.addEventListener('scroll', function() {
+            const backToTop = document.getElementById('backToTop');
+            if (window.pageYOffset > 300) {
+                backToTop.classList.add('visible');
+            } else {
+                backToTop.classList.remove('visible');
+            }
+        });
+    </script>
+</body>
+</html>
