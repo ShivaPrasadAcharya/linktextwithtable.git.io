@@ -4417,7 +4417,7 @@
         }
 
         function getData(tableName, id) {
-            return tableData[tableName].find(row => row.IID === id);
+            return tableData[tableName].find(row => row.ID === id);
         }
 
         // Search functionality
@@ -4444,7 +4444,7 @@
                         if (value.includes(searchTerm.toLowerCase())) {
                             results.push({
                                 table: tableName,
-                                id: row.IID,
+                                id: row.ID,
                                 column: column,
                                 value: row[column],
                                 fullRow: row
