@@ -314,11 +314,128 @@
             color: #0066cc;
             text-decoration: underline;
         }
+
+        /* Hide table sections by default; user chooses which to display */
+        .table-section.hidden-table {
+            display: none;
+        }
+
+        /* Table selector dropdown */
+        .table-controls {
+            margin: 15px 0 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown button {
+            background: #0066cc;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            min-width: 140px;
+            transition: background .15s ease, transform .08s ease;
+        }
+
+        .dropdown button:hover { background: #0052a3; transform: translateY(-1px); }
+
+        /* Use visibility/opacity for smooth transitions */
+        .dropdown-content {
+            visibility: hidden;
+            opacity: 0;
+            transform: translateY(-6px);
+            transition: opacity .16s ease, transform .16s ease, visibility .16s;
+            position: absolute;
+            background: white;
+            border: 1px solid #e6eef6;
+            min-width: 260px;
+            max-height: 320px;
+            overflow-y: auto;
+            padding: 10px;
+            box-shadow: 0 10px 30px rgba(6,60,100,0.08);
+            z-index: 3000;
+            border-radius: 8px;
+        }
+
+        .dropdown.open .dropdown-content { visibility: visible; opacity: 1; transform: translateY(0); }
+
+        .table-option { display: flex; align-items: center; gap: 12px; padding: 8px 6px; }
+        .table-option { position: relative; }
+
+        /* Hide the native checkbox and create a custom visual using label pseudo elements */
+        .table-option input[type="checkbox"] { position: absolute; left: 0; top: 0; width: 20px; height: 20px; opacity: 0; pointer-events: auto; }
+        .table-option label { cursor: pointer; padding-left: 32px; display: block; line-height: 1.1; color: #233; }
+
+        .table-option label::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            border-radius: 6px;
+            border: 2px solid #cfd8dc;
+            background: #fff;
+            box-shadow: 0 1px 3px rgba(14,20,30,0.04);
+            transition: all .14s ease;
+        }
+
+        .table-option input[type="checkbox"]:checked + label::before {
+            background: linear-gradient(135deg,#00c6ff,#0066cc);
+            border-color: #0066cc;
+            box-shadow: 0 6px 16px rgba(0,102,204,0.16);
+        }
+
+        .table-option label::after {
+            content: '';
+            position: absolute;
+            left: 6px;
+            top: 50%;
+            transform: translateY(-50%) rotate(45deg) scale(0);
+            width: 6px;
+            height: 11px;
+            border: solid #fff;
+            border-width: 0 2px 2px 0;
+            transition: transform .12s ease;
+        }
+
+        .table-option input[type="checkbox"]:checked + label::after {
+            transform: translateY(-50%) rotate(45deg) scale(1);
+        }
+
+        .table-option label:hover::before { transform: translateY(-52%); border-color: #9fb6cc; }
+
+        /* Responsive behavior */
+        @media (max-width: 600px) {
+            .table-controls { flex-direction: column; align-items: stretch; gap: 8px; }
+            .dropdown { width: 100%; }
+            .dropdown button { width: 100%; text-align: left; }
+            .dropdown-content { position: fixed; left: 10px; right: 10px; top: 72px; min-width: auto; max-height: 60vh; }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>📊 Interactive Table Reference System</h1>
+
+        <div class="table-controls">
+            <div style="font-weight:bold; color:#333;">Show tables:</div>
+            <div class="dropdown" id="tableDropdownWrapper">
+                <button id="tableDropdownBtn">Select tables ▾</button>
+                <div class="dropdown-content" id="tableDropdown">
+                    <div id="tableList"></div>
+                </div>
+            </div>
+            <div style="color:#666; font-size:0.95em;">Select one or more tables to display</div>
+        </div>
         
         <div class="narrative">
             <h2>Project Summary</h2>
@@ -1376,16 +1493,218 @@ For detailed comparison, see I(2,001+002,3+4) which includes both Result and Rem
             }
         }
 
+        // Internal registry for tables (includes inline and external)
+        window.TableRefSystem = window.TableRefSystem || {};
+        window.TableRefSystem._registeredTables = window.TableRefSystem._registeredTables || [];
+
+        function addRegisteredTable(tableId, title, sectionEl) {
+            // Avoid duplicates
+            if (window.TableRefSystem._registeredTables.find(r => r.tableId === tableId)) return;
+            window.TableRefSystem._registeredTables.push({ tableId, title, sectionEl });
+            updateTableListUI();
+        }
+
+        function refreshDropdownSummary() {
+            const btn = document.getElementById('tableDropdownBtn');
+            const list = document.getElementById('tableList');
+            if (!btn || !list) return;
+            const total = list.querySelectorAll('.table-option input[type="checkbox"]:not(#tableAllCheckbox)').length;
+            const checked = list.querySelectorAll('.table-option input[type="checkbox"]:not(#tableAllCheckbox):checked').length;
+            if (total === 0) btn.textContent = 'No tables';
+            else if (checked === 0) btn.textContent = 'Select tables ▾';
+            else if (checked === total) btn.textContent = `All (${checked}) ▾`;
+            else btn.textContent = `Selected: ${checked} ▾`;
+        }
+
+        function updateTableListUI() {
+            const list = document.getElementById('tableList');
+            if (!list) return;
+            // Preserve current selections
+            const prevSelected = new Set(Array.from(list.querySelectorAll('.table-option input[type="checkbox"]:not(#tableAllCheckbox):checked')).map(i => i.getAttribute('data-table')));
+
+            // Clear
+            list.innerHTML = '';
+
+            // Create All option at the top
+            const allDiv = document.createElement('div');
+            allDiv.className = 'table-option';
+            allDiv.innerHTML = `<input type="checkbox" id="tableAllCheckbox"> <label for="tableAllCheckbox"><strong>All</strong></label>`;
+            list.appendChild(allDiv);
+
+            for (const reg of window.TableRefSystem._registeredTables) {
+                const div = document.createElement('div');
+                div.className = 'table-option';
+                div.innerHTML = `<input type="checkbox" id="chk_${reg.tableId}" data-table="${reg.tableId}"> <label for="chk_${reg.tableId}">${reg.title} (<code>${reg.tableId}</code>)</label>`;
+                list.appendChild(div);
+
+                // Restore previous checked state or default based on section visibility
+                const chk = div.querySelector('input[type="checkbox"]');
+                const isVisible = reg.sectionEl && !reg.sectionEl.classList.contains('hidden-table');
+                chk.checked = prevSelected.has(reg.tableId) || isVisible;
+
+                // Make the entire option clickable and prevent the dropdown from closing
+                div.addEventListener('click', (e) => {
+                    // If the actual input was clicked, let the change event handle it
+                    if (e.target && e.target.tagName && e.target.tagName.toLowerCase() === 'input') return;
+                    // Avoid toggling when clicking links or code elements inside label
+                    if (e.target && (e.target.tagName.toLowerCase() === 'a' || e.target.tagName.toLowerCase() === 'code')) return;
+
+                    const checkbox = div.querySelector('input[type="checkbox"]');
+                    if (!checkbox) return;
+                    checkbox.checked = !checkbox.checked;
+                    checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+                    e.stopPropagation();
+                });
+            }
+
+            // Attach event listeners for table checkboxes (exclude All)
+            list.querySelectorAll('.table-option input[type="checkbox"]:not(#tableAllCheckbox)').forEach(chk => {
+                // Remove duplicate handlers by replacing with a clone
+                const newChk = chk.cloneNode(true);
+                chk.parentNode.replaceChild(newChk, chk);
+            });
+
+            list.querySelectorAll('.table-option input[type="checkbox"]:not(#tableAllCheckbox)').forEach(chk => {
+                chk.addEventListener('change', (e) => {
+                    const tableId = chk.getAttribute('data-table');
+                    toggleTableVisibility(tableId, chk.checked);
+                    // Update All checkbox state based on table checkboxes only
+                    const total = list.querySelectorAll('.table-option input[type="checkbox"]:not(#tableAllCheckbox)').length;
+                    const checked = list.querySelectorAll('.table-option input[type="checkbox"]:not(#tableAllCheckbox):checked').length;
+                    const allChk = document.getElementById('tableAllCheckbox');
+                    if (allChk) allChk.checked = (total === checked && total > 0);
+
+                    // Refresh summary
+                    refreshDropdownSummary();
+                });
+            });
+
+            // Setup All checkbox change handler
+            const allChk = document.getElementById('tableAllCheckbox');
+            if (allChk) {
+                // Make label clicks also toggle All reliably
+                const allLabel = list.querySelector('label[for="tableAllCheckbox"]');
+                if (allLabel) {
+                    allLabel.addEventListener('click', (e) => {
+                        e.preventDefault(); // prevent any default double handling
+                        allChk.checked = !allChk.checked;
+                        allChk.dispatchEvent(new Event('change'));
+                    });
+                }
+
+                allChk.addEventListener('change', () => {
+                    const tableChks = list.querySelectorAll('.table-option input[type="checkbox"]:not(#tableAllCheckbox)');
+                    tableChks.forEach(c => {
+                        c.checked = allChk.checked;
+                        c.dispatchEvent(new Event('change'));
+                    });
+                    refreshDropdownSummary();
+                });
+
+                // Sync All checkbox with current table checkboxes
+                const total = list.querySelectorAll('.table-option input[type="checkbox"]:not(#tableAllCheckbox)').length;
+                const checked = list.querySelectorAll('.table-option input[type="checkbox"]:not(#tableAllCheckbox):checked').length;
+                allChk.checked = (total === checked && total > 0);
+
+                if (allChk.checked) {
+                    list.querySelectorAll('.table-option input[type="checkbox"]:not(#tableAllCheckbox)').forEach(c => {
+                        if (!c.checked) {
+                            c.checked = true;
+                            c.dispatchEvent(new Event('change'));
+                        }
+                    });
+                }
+            }
+
+            // Refresh dropdown button text
+            refreshDropdownSummary();
+        }
+
+        function toggleTableVisibility(tableId, visible) {
+            const reg = window.TableRefSystem._registeredTables.find(r => r.tableId === tableId);
+            if (!reg || !reg.sectionEl) return;
+            if (visible) reg.sectionEl.classList.remove('hidden-table');
+            else reg.sectionEl.classList.add('hidden-table');
+        }
+
+        function collectInlineTables() {
+            // Find existing .table-section blocks with table ids
+            const sections = document.querySelectorAll('.table-section');
+            sections.forEach(sec => {
+                const table = sec.querySelector('table');
+                if (!table || !table.id) return;
+                const titleEl = sec.querySelector('h3');
+                const title = titleEl ? titleEl.textContent.trim() : table.id;
+                // Hide by default
+                sec.classList.add('hidden-table');
+                addRegisteredTable(table.id, title, sec);
+            });
+        }
+
+        function initTableSelector() {
+            const wrapper = document.getElementById('tableDropdownWrapper');
+            const btn = document.getElementById('tableDropdownBtn');
+            const dropdown = document.getElementById('tableDropdown');
+
+            if (!wrapper || !btn || !dropdown) return;
+
+            btn.addEventListener('click', (e) => {
+                wrapper.classList.toggle('open');
+            });
+
+            // Close on click outside
+            document.addEventListener('click', (e) => {
+                if (!wrapper.contains(e.target)) wrapper.classList.remove('open');
+            });
+        }
+
+        // Patch registerTableFromJSON to hide tables by default and register them
+        const _origRegisterTableFromJSON = registerTableFromJSON;
+        registerTableFromJSON = function(tableNum, title, dataArray, container) {
+            _origRegisterTableFromJSON(tableNum, title, dataArray, container);
+            const tableId = 'T' + tableNum;
+            const sec = document.getElementById(tableId)?.closest('.table-section') || document.getElementById(tableId)?.parentElement;
+            const sectionEl = document.getElementById(tableId)?.closest('.table-section');
+            if (sectionEl) {
+                sectionEl.classList.add('hidden-table');
+                addRegisteredTable(tableId, `Table ${tableNum}: ${title}`, sectionEl);
+            }
+        };
+
+        // Ensure inline tables are collected and UI initialized after DOM ready
+        document.addEventListener('DOMContentLoaded', () => {
+            collectInlineTables();
+            initTableSelector();
+            updateTableListUI();
+        });
+
+        // Ensure we re-populate list after external tables are registered
+        const _origDetect = detectAndRenderTablesFromWindow;
+        detectAndRenderTablesFromWindow = function() {
+            _origDetect();
+            // After registering external tables, collect their sections and add to list
+            window.TableRefSystem._registeredTables.forEach(r => {
+                const sec = document.getElementById(r.tableId)?.closest('.table-section');
+                if (sec) {
+                    sec.classList.add('hidden-table');
+                    r.sectionEl = sec;
+                }
+            });
+            updateTableListUI();
+        };
+
         // Expose functions globally for external use
-        window.TableRefSystem = {
+        window.TableRefSystem = Object.assign(window.TableRefSystem, {
             autoLinkReferences,
             loadMarkdownFile,
             loadTextFile,
             renderMarkdown,
             processInlineText,
             registerWindowTables: detectAndRenderTablesFromWindow,
-            registerTableFromJSON
-        };
+            registerTableFromJSON,
+            addRegisteredTable,
+            _registeredTables: window.TableRefSystem._registeredTables
+        });
     </script>
           <script src="datanoteU14.js"></script>
           <script>
