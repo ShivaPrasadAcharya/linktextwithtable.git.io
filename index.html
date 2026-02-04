@@ -3,1721 +3,556 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive Table Reference System</title>
-    <script src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"></script>
+    <title>Table Reference System Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: Arial, sans-serif;
-            background: #f0f2f5;
-            padding: 20px;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            padding: 30px;
-        }
-        
-        h1 {
-            color: #333;
-            margin-bottom: 20px;
-        }
-        
-        .narrative {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 30px;
-            line-height: 1.8;
-        }
-        
-        .narrative h2 {
-            color: #555;
-            margin-bottom: 15px;
-            font-size: 1.3em;
-        }
-        
-        .narrative h4 {
-            color: #666;
-            margin: 15px 0 10px 0;
-            font-size: 1em;
-        }
-        
-        .link {
-            color: #0066cc;
-            text-decoration: none;
-            font-weight: bold;
-            cursor: pointer;
-            border-bottom: 1px dotted #0066cc;
-        }
-        
-        .link:hover {
-            background: #e6f2ff;
-            padding: 2px 4px;
-            border-radius: 3px;
-        }
-        
-        .tooltip {
-            position: fixed;
-            background: #333;
-            color: white;
-            padding: 10px 15px;
-            border-radius: 5px;
-            font-size: 0.9em;
-            max-width: 500px;
-            z-index: 1000;
-            display: none;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-        }
-        
-        .tooltip-item {
-            margin-bottom: 8px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid #555;
-        }
-        
-        .tooltip-item:last-child {
-            margin-bottom: 0;
-            padding-bottom: 0;
-            border-bottom: none;
-        }
-        
-        .tooltip-row-label {
-            color: #7cb3ff;
-            font-weight: bold;
-            margin-bottom: 4px;
-        }
-        
-        .tooltip-col {
-            margin-left: 10px;
-            margin-top: 3px;
-        }
-        
-        .tooltip-col-label {
-            color: #aaa;
-            font-size: 0.85em;
-        }
-        
-        .table-section {
-            margin-bottom: 30px;
-        }
-        
-        .table-section h3 {
-            color: #555;
-            margin-bottom: 10px;
-        }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-        }
-        
-        th, td {
-            padding: 10px;
-            text-align: left;
-            border: 1px solid #ddd;
-        }
-        
-        th {
-            background: #0066cc;
-            color: white;
-        }
-        
-        tr:hover {
-            background: #f5f5f5;
-        }
-        
-        tr.highlight {
-            background: #fff3cd !important;
-        }
-        
-        td.highlight-cell {
-            background: #ffe066 !important;
-            font-weight: bold;
-        }
-        
-        .detail-panel {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-            max-width: 700px;
-            width: 90%;
-            max-height: 80vh;
-            overflow-y: auto;
-            z-index: 2000;
-            display: none;
-        }
-        
-        .detail-panel.active {
-            display: block;
-        }
-        
-        .detail-panel h3 {
-            color: #333;
-            margin-bottom: 15px;
-        }
-        
-        .detail-group {
-            margin-bottom: 20px;
-            padding: 15px;
-            background: #f0f4f8;
-            border-radius: 8px;
-            border-left: 4px solid #0066cc;
-        }
-        
-        .detail-group-title {
-            font-weight: bold;
-            color: #0066cc;
-            margin-bottom: 10px;
-            font-size: 1.1em;
-        }
-        
-        .detail-row {
-            margin-bottom: 10px;
-            padding: 8px;
-            background: white;
-            border-radius: 5px;
-        }
-        
-        .detail-row.highlighted {
-            background: #fff3cd;
-            border: 1px solid #ffc107;
-        }
-        
-        .detail-label {
-            font-weight: bold;
-            color: #0066cc;
-        }
-        
-        .close-btn {
-            background: #0066cc;
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            float: right;
-        }
-        
-        .close-btn:hover {
-            background: #0052a3;
-        }
-        
-        .overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 1500;
-            display: none;
-        }
-        
-        .overlay.active {
-            display: block;
-        }
-        
-        .legend {
-            background: #e8f4f8;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 20px;
-            font-size: 0.9em;
-        }
-        
-        .legend h4 {
-            margin-bottom: 10px;
-            color: #333;
-        }
-        
-        .legend code {
-            background: #d4e8f0;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-family: monospace;
-        }
-        
-        /* Markdown content styles */
-        .narrative h1, .narrative h2, .narrative h3, .narrative h4 {
-            margin-top: 15px;
-            margin-bottom: 10px;
-        }
-        
-        .narrative ul, .narrative ol {
-            margin: 10px 0;
-            padding-left: 25px;
-        }
-        
-        .narrative li {
-            margin: 5px 0;
-        }
-        
-        .narrative blockquote {
-            border-left: 4px solid #0066cc;
-            margin: 15px 0;
-            padding: 10px 15px;
-            background: #e6f2ff;
-            border-radius: 0 5px 5px 0;
-        }
-        
-        .narrative pre {
-            background: #2d2d2d;
-            color: #f8f8f2;
-            padding: 15px;
-            border-radius: 5px;
-            overflow-x: auto;
-            margin: 15px 0;
-        }
-        
-        .narrative code {
-            background: #e8e8e8;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-family: 'Courier New', monospace;
-            font-size: 0.9em;
-        }
-        
-        .narrative pre code {
-            background: none;
-            padding: 0;
-        }
-        
-        .narrative hr {
-            border: none;
-            border-top: 2px solid #ddd;
-            margin: 20px 0;
-        }
-        
-        .narrative img {
-            max-width: 100%;
-            border-radius: 5px;
-            margin: 10px 0;
-        }
-        
-        .narrative a:not(.link) {
-            color: #0066cc;
-            text-decoration: underline;
-        }
-
-        /* Hide table sections by default; user chooses which to display */
-        .table-section.hidden-table {
-            display: none;
-        }
-
-        /* Table selector dropdown */
-        .table-controls {
-            margin: 15px 0 20px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .dropdown {
-            position: relative;
-            display: inline-block;
-        }
-
-        .dropdown button {
-            background: #0066cc;
-            color: white;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            min-width: 140px;
-            transition: background .15s ease, transform .08s ease;
-        }
-
-        .dropdown button:hover { background: #0052a3; transform: translateY(-1px); }
-
-        /* Use visibility/opacity for smooth transitions */
-        .dropdown-content {
-            visibility: hidden;
-            opacity: 0;
-            transform: translateY(-6px);
-            transition: opacity .16s ease, transform .16s ease, visibility .16s;
-            position: absolute;
-            background: white;
-            border: 1px solid #e6eef6;
-            min-width: 260px;
-            max-height: 320px;
-            overflow-y: auto;
-            padding: 10px;
-            box-shadow: 0 10px 30px rgba(6,60,100,0.08);
-            z-index: 3000;
-            border-radius: 8px;
-        }
-
-        .dropdown.open .dropdown-content { visibility: visible; opacity: 1; transform: translateY(0); }
-
-        .table-option { display: flex; align-items: center; gap: 12px; padding: 8px 6px; }
-        .table-option { position: relative; }
-
-        /* Hide the native checkbox and create a custom visual using label pseudo elements */
-        .table-option input[type="checkbox"] { position: absolute; left: 0; top: 0; width: 20px; height: 20px; opacity: 0; pointer-events: auto; }
-        .table-option label { cursor: pointer; padding-left: 32px; display: block; line-height: 1.1; color: #233; }
-
-        .table-option label::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 20px;
-            height: 20px;
-            border-radius: 6px;
-            border: 2px solid #cfd8dc;
-            background: #fff;
-            box-shadow: 0 1px 3px rgba(14,20,30,0.04);
-            transition: all .14s ease;
-        }
-
-        .table-option input[type="checkbox"]:checked + label::before {
-            background: linear-gradient(135deg,#00c6ff,#0066cc);
-            border-color: #0066cc;
-            box-shadow: 0 6px 16px rgba(0,102,204,0.16);
-        }
-
-        .table-option label::after {
-            content: '';
-            position: absolute;
-            left: 6px;
-            top: 50%;
-            transform: translateY(-50%) rotate(45deg) scale(0);
-            width: 6px;
-            height: 11px;
-            border: solid #fff;
-            border-width: 0 2px 2px 0;
-            transition: transform .12s ease;
-        }
-
-        .table-option input[type="checkbox"]:checked + label::after {
-            transform: translateY(-50%) rotate(45deg) scale(1);
-        }
-
-        .table-option label:hover::before { transform: translateY(-52%); border-color: #9fb6cc; }
-
-        /* Responsive behavior */
-        @media (max-width: 600px) {
-            .table-controls { flex-direction: column; align-items: stretch; gap: 8px; }
-            .dropdown { width: 100%; }
-            .dropdown button { width: 100%; text-align: left; }
-            .dropdown-content { position: fixed; left: 10px; right: 10px; top: 72px; min-width: auto; max-height: 60vh; }
-        }
+        :root{--bg:#0a0a0f;--surface:#12121a;--surface2:#1a1a25;--accent:#6366f1;--accent2:#8b5cf6;--accent3:#06b6d4;--accent4:#10b981;--text:#e4e4e7;--text-dim:#71717a;--border:#27272a;--glow:rgba(99,102,241,0.4);--success:#22c55e;--warn:#f59e0b;--danger:#ef4444}
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;background-image:radial-gradient(ellipse at 50% 0%,rgba(99,102,241,0.12) 0%,transparent 50%),radial-gradient(ellipse at 80% 80%,rgba(139,92,246,0.08) 0%,transparent 40%)}
+        .container{max-width:1400px;margin:0 auto;padding:30px 20px}
+        header{text-align:center;margin-bottom:30px}
+        h1{font-size:clamp(1.8rem,4vw,2.5rem);font-weight:700;background:linear-gradient(135deg,var(--accent),var(--accent2),var(--accent3));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+        .subtitle{color:var(--text-dim);margin-top:6px;font-weight:300}
+        .global-search{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px 20px;margin-bottom:20px;position:sticky;top:10px;z-index:200;backdrop-filter:blur(10px)}
+        .search-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+        .search-input-wrap{flex:1;min-width:250px;position:relative}
+        .search-input-wrap input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 16px 12px 44px;color:var(--text);font-size:.95rem;font-family:inherit;transition:all .2s}
+        .search-input-wrap input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--glow)}
+        .search-input-wrap svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text-dim)}
+        .search-stats{display:flex;gap:16px;align-items:center;font-size:.9rem;color:var(--text-dim)}
+        .search-stats span{background:var(--surface2);padding:6px 12px;border-radius:8px}
+        .search-stats .count{color:var(--accent3);font-weight:600}
+        .search-nav{display:flex;gap:6px}
+        .search-nav button{background:var(--surface2);border:1px solid var(--border);color:var(--text);width:36px;height:36px;border-radius:8px;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center}
+        .search-nav button:hover:not(:disabled){background:var(--accent);border-color:var(--accent)}
+        .search-nav button:disabled{opacity:.4;cursor:not-allowed}
+        .highlight-match{background:rgba(251,191,36,0.4);color:#fbbf24;border-radius:3px;padding:0 2px}
+        .highlight-current{background:rgba(34,197,94,0.5);color:#22c55e;outline:2px solid var(--success)}
+        .filter-ribbon{background:var(--surface);border:1px solid var(--border);border-radius:16px;margin-bottom:20px;overflow:hidden}
+        .ribbon-header{display:flex;justify-content:space-between;align-items:center;padding:14px 20px;cursor:pointer;background:linear-gradient(135deg,rgba(99,102,241,0.1),rgba(139,92,246,0.1));transition:background .2s}
+        .ribbon-header:hover{background:linear-gradient(135deg,rgba(99,102,241,0.15),rgba(139,92,246,0.15))}
+        .ribbon-header h3{font-size:1rem;display:flex;align-items:center;gap:10px}
+        .ribbon-header h3 svg{color:var(--accent)}
+        .ribbon-toggle{background:var(--surface2);border:none;color:var(--text);width:32px;height:32px;border-radius:8px;cursor:pointer;transition:transform .3s}
+        .ribbon-toggle.open{transform:rotate(180deg)}
+        .ribbon-content{max-height:0;overflow:hidden;transition:max-height .3s ease}
+        .ribbon-content.open{max-height:600px}
+        .ribbon-inner{padding:20px;display:flex;flex-direction:column;gap:16px}
+        .filter-group{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+        .filter-group label{font-size:.85rem;color:var(--text-dim);min-width:80px}
+        .filter-input{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-family:inherit;font-size:.9rem;flex:1;min-width:150px}
+        .filter-input:focus{outline:none;border-color:var(--accent)}
+        .filter-select{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-family:inherit;cursor:pointer;min-width:100px}
+        .logic-btns{display:flex;gap:6px}
+        .logic-btn{background:var(--surface2);border:1px solid var(--border);color:var(--text-dim);padding:8px 14px;border-radius:8px;cursor:pointer;font-size:.85rem;font-weight:500;transition:all .15s}
+        .logic-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}
+        .logic-btn:hover:not(.active){border-color:var(--accent)}
+        .btn{background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;color:#fff;padding:10px 18px;border-radius:10px;cursor:pointer;font-family:inherit;font-weight:500;font-size:.9rem;transition:all .2s;display:inline-flex;align-items:center;gap:8px}
+        .btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px var(--glow)}
+        .btn-secondary{background:var(--surface2);border:1px solid var(--border)}
+        .btn-secondary:hover{border-color:var(--accent);box-shadow:none;transform:none}
+        .btn-danger{background:linear-gradient(135deg,var(--danger),#dc2626)}
+        .btn-success{background:linear-gradient(135deg,var(--accent4),#059669)}
+        .btn-sm{padding:8px 12px;font-size:.85rem}
+        .filter-tag{background:var(--surface);border:1px solid var(--border);padding:6px 12px;border-radius:8px;font-size:.85rem;display:inline-flex;align-items:center;gap:8px}
+        .filter-tag .remove{cursor:pointer;color:var(--danger);font-weight:bold}
+        .controls-bar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+        .dropdown{position:relative}
+        .dropdown>button{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:10px 16px;border-radius:10px;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:8px;transition:all .2s}
+        .dropdown>button:hover{border-color:var(--accent)}
+        .dropdown-menu{position:absolute;top:calc(100% + 6px);left:0;min-width:260px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:8px;opacity:0;visibility:hidden;transform:translateY(-8px);transition:all .2s;z-index:100;box-shadow:0 16px 40px rgba(0,0,0,.4);max-height:300px;overflow-y:auto}
+        .dropdown.open .dropdown-menu{opacity:1;visibility:visible;transform:translateY(0)}
+        .dropdown-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:8px;cursor:pointer;transition:background .15s}
+        .dropdown-item:hover{background:var(--surface)}
+        .dropdown-item input{accent-color:var(--accent);width:18px;height:18px;cursor:pointer}
+        .dropdown-item code{font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--accent3);margin-left:auto}
+        .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:20px}
+        .card h2{font-size:1.1rem;margin-bottom:14px;display:flex;align-items:center;gap:10px}
+        .card h2::before{content:'';width:4px;height:18px;background:linear-gradient(var(--accent),var(--accent2));border-radius:2px}
+        .ref-section{margin-bottom:16px}
+        .ref-section h4{font-size:.8rem;color:var(--accent3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;font-weight:500}
+        .ref-section p{line-height:1.8;color:var(--text-dim);font-size:.95rem}
+        .link{color:var(--accent);text-decoration:none;font-family:'JetBrains Mono',monospace;font-size:.85em;background:rgba(99,102,241,.15);padding:2px 8px;border-radius:6px;cursor:pointer;transition:all .15s;border:1px solid transparent}
+        .link:hover{background:rgba(99,102,241,.25);border-color:var(--accent);box-shadow:0 0 12px var(--glow)}
+        .table-section{display:none;margin-bottom:24px}
+        .table-section.visible{display:block}
+        .table-filter-ribbon{background:var(--surface2);border:1px solid var(--border);border-radius:12px;margin-bottom:12px;overflow:hidden}
+        .table-filter-ribbon .ribbon-header{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;cursor:pointer;background:linear-gradient(135deg,rgba(99,102,241,0.08),rgba(139,92,246,0.08))}
+        .table-filter-ribbon .ribbon-header:hover{background:linear-gradient(135deg,rgba(99,102,241,0.12),rgba(139,92,246,0.12))}
+        .table-filter-ribbon .ribbon-header h4{font-size:.9rem;display:flex;align-items:center;gap:8px;color:var(--text-dim);font-weight:500}
+        .table-filter-ribbon .ribbon-content{max-height:0;overflow:hidden;transition:max-height .3s}
+        .table-filter-ribbon .ribbon-content.open{max-height:400px}
+        .table-filter-ribbon .ribbon-inner{padding:14px;display:flex;flex-direction:column;gap:12px}
+        .filter-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 10px;background:var(--surface);border-radius:8px}
+        .filter-row select,.filter-row input{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;color:var(--text);font-size:.85rem;font-family:inherit}
+        .filter-row select{min-width:110px}
+        .filter-row input{flex:1;min-width:120px}
+        .filter-row .remove-filter{background:transparent;border:none;color:var(--danger);cursor:pointer;padding:4px 8px;font-size:1.1rem}
+        .table-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:12px}
+        .table-header h3{font-size:1rem;color:var(--text)}
+        .table-meta{display:flex;gap:12px;align-items:center;font-size:.85rem;flex-wrap:wrap}
+        .row-count{background:var(--surface2);padding:6px 12px;border-radius:8px;color:var(--text-dim)}
+        .row-count span{color:var(--accent3);font-weight:600}
+        .table-actions{display:flex;gap:8px;flex-wrap:wrap}
+        .export-dropdown{position:relative}
+        .export-menu{position:absolute;top:calc(100% + 6px);right:0;min-width:180px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:6px;opacity:0;visibility:hidden;transform:translateY(-8px);transition:all .2s;z-index:50}
+        .export-dropdown.open .export-menu{opacity:1;visibility:visible;transform:translateY(0)}
+        .export-item{padding:10px 14px;border-radius:8px;cursor:pointer;font-size:.9rem;transition:background .15s;display:flex;align-items:center;gap:10px}
+        .export-item:hover{background:var(--surface)}
+        .export-item code{color:var(--accent3);font-family:'JetBrains Mono',monospace;font-size:.8rem}
+        .table-filter-row{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+        .col-filter{flex:1;min-width:100px}
+        .col-filter input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:.85rem;font-family:inherit}
+        .col-filter input:focus{outline:none;border-color:var(--accent)}
+        .col-filter input::placeholder{color:var(--text-dim)}
+        .table-wrap{overflow-x:auto;border-radius:12px;border:1px solid var(--border)}
+        table{width:100%;border-collapse:collapse;font-size:.9rem;min-width:400px}
+        th,td{padding:12px 16px;text-align:left;border-bottom:1px solid var(--border)}
+        th{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-weight:500;cursor:pointer;user-select:none;white-space:nowrap}
+        th:hover{background:linear-gradient(135deg,var(--accent2),var(--accent))}
+        th .sort-icon{margin-left:6px;opacity:.5;display:inline-block;transition:transform .2s}
+        th.sorted .sort-icon{opacity:1}
+        th.sorted.asc .sort-icon{transform:rotate(180deg)}
+        tr{transition:background .15s}
+        tr:hover{background:var(--surface2)}
+        tr.highlight{background:rgba(99,102,241,.2)!important}
+        tr.filtered-out{display:none}
+        td.highlight-cell{background:rgba(139,92,246,.3)!important;box-shadow:inset 0 0 0 2px var(--accent2)}
+        .tooltip{position:fixed;background:var(--surface2);color:var(--text);padding:12px 16px;border-radius:10px;font-size:.9rem;max-width:400px;z-index:1000;display:none;border:1px solid var(--border);box-shadow:0 12px 32px rgba(0,0,0,.5)}
+        .tooltip-row{color:var(--accent);font-weight:500;margin-bottom:4px}
+        .tooltip-col{margin-left:12px;color:var(--text-dim);font-size:.85rem}
+        .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:500;display:none;align-items:center;justify-content:center}
+        .modal-overlay.active{display:flex}
+        .modal{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:24px;max-width:600px;width:90%;max-height:80vh;overflow-y:auto}
+        .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+        .modal-header h3{font-size:1.1rem}
+        .modal-close{background:var(--surface2);border:none;color:var(--text);width:36px;height:36px;border-radius:10px;cursor:pointer;font-size:1.2rem;transition:background .15s}
+        .modal-close:hover{background:var(--border)}
+        .detail-group{background:var(--surface2);padding:14px;border-radius:12px;margin-bottom:10px;border-left:3px solid var(--accent)}
+        .detail-group-title{color:var(--accent);font-weight:600;margin-bottom:8px}
+        .detail-row{background:var(--surface);padding:8px 12px;border-radius:8px;margin-top:6px}
+        .detail-row.highlighted{border:1px solid var(--accent2);background:rgba(139,92,246,.15)}
+        .detail-label{color:var(--accent3);font-weight:500}
+        .legend{background:var(--surface2);padding:16px;border-radius:12px;margin-top:20px}
+        .legend h4{font-size:.9rem;margin-bottom:10px;color:var(--accent3)}
+        .legend-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:8px}
+        .legend p{font-size:.85rem;color:var(--text-dim);display:flex;align-items:center;gap:8px}
+        .legend code{font-family:'JetBrains Mono',monospace;background:var(--surface);padding:3px 8px;border-radius:6px;color:var(--accent);font-size:.8rem}
+        .toast{position:fixed;bottom:24px;right:24px;background:var(--surface2);border:1px solid var(--accent4);padding:14px 20px;border-radius:12px;display:flex;align-items:center;gap:12px;z-index:600;transform:translateY(100px);opacity:0;transition:all .3s}
+        .toast.show{transform:translateY(0);opacity:1}
+        .toast svg{color:var(--accent4)}
+        @media(max-width:768px){.search-row,.filter-group{flex-direction:column;align-items:stretch}.search-stats{justify-content:center}.filter-group label{min-width:auto}.table-header{flex-direction:column;align-items:flex-start}}
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>📊 Interactive Table Reference System</h1>
-
-        <div class="table-controls">
-            <div style="font-weight:bold; color:#333;">Show tables:</div>
-            <div class="dropdown" id="tableDropdownWrapper">
-                <button id="tableDropdownBtn">Select tables ▾</button>
-                <div class="dropdown-content" id="tableDropdown">
-                    <div id="tableList"></div>
-                </div>
+<div class="container">
+    <header>
+        <h1>📊 Table Reference System Pro</h1>
+        <p class="subtitle">Advanced search, filtering, sorting & export</p>
+    </header>
+    
+    <div class="global-search">
+        <div class="search-row">
+            <div class="search-input-wrap">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                <input type="text" id="globalSearch" placeholder="Search entire page... (Ctrl+F)">
             </div>
-            <div style="color:#666; font-size:0.95em;">Select one or more tables to display</div>
-        </div>
-        
-        <div class="narrative">
-            <h2>Project Summary</h2>
-            
-            <h4>Basic References (Single Row, Single/No Column)</h4>
-            <p class="auto-link-refs">
-                The validation process reviewed entry R(14,2) successfully. Item I(1,2.a) showed improvement. Test I(1,3.0.a.P) needs review. Check the status: R(1,2,3).
-            </p>
-            
-            <h4>Single Row, Multiple Columns</h4>
-            <p class="auto-link-refs">
-                View ID and Status for row 1: I(1,1.0,1+3). See Text, Status, Remark: R(1,1,2+3+4). Experiment 001 Result & Remark: I(2,001,3+4).
-            </p>
-            
-            <h4>Multiple Rows, Single Column</h4>
-            <p class="auto-link-refs">
-                Compare results R(14,5+7,2+3) for analysis. See rows R(1,1+2,3) status comparison. All experiment IDs: R(2,1+2+3,1).
-            </p>
-            
-            <h4>Range Syntax (Using -)</h4>
-            <p class="auto-link-refs">
-                Rows 1-3, Status column: R(14,1-3,3). IDs 001-003, Result column: I(2,001-003,3). Row 1, Columns 2-4: R(1,1,2-4). Mixed: R(2,1-3,3+4) and I(2,001-002,2-4).
-            </p>
-            
-            <h4>Continuous Display (Using *)</h4>
-            <p class="auto-link-refs">
-                Combined text from IDs 1.0 and 2.a: I(1,1.0*2.a*3.0.a.P,2). All statuses in one line: R(1,1*2*3,3). Mixed (1.0*2.a on one line, 3.0.a.P on new line): I(1,1.0*2.a+3.0.a.P,2).
-            </p>
-            
-            <h4>Multiple Rows, Multiple Columns</h4>
-            <p class="auto-link-refs">
-                Full comparison 001 & 002 (Result + Remark): I(2,001+002,3+4). Table 1 rows 1-3 (Status + Remark): R(1,1+2+3,3+4). All experiments (ID + Result): I(2,001+002+003,1+3).
-            </p>
-            
-            <h4>Full Row References (No Column Specified)</h4>
-            <p class="auto-link-refs">
-                Full details: I(2,001+002+003). Row comparison: R(2,1+2+3).<br>
-                This is after line break I(2,001+002,3)<br>
-                This is R(1,1*2*3,3) check.
-            </p>
-
-            <h4>All Rows / All Columns Examples</h4>
-            <p class="auto-link-refs">
-                Example: View all rows in Table 2's first column: R(2,all,1). See full table 1: I(1,all,all).
-            </p>
-        </div>
-        
-        <div class="table-section">
-            <h3>Table 1: Validation Results</h3>
-            <table id="T1">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Text</th>
-                        <th>Status</th>
-                        <th>Remark</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>1.0</td>
-                        <td>Primary validation completed</td>
-                        <td>Passed</td>
-                        <td>All criteria met</td>
-                    </tr>
-                    <tr>
-                        <td>2.a</td>
-                        <td>Performance metrics improved</td>
-                        <td>Passed</td>
-                        <td>20% increase over baseline</td>
-                    </tr>
-                    <tr>
-                        <td>3.0.a.P</td>
-                        <td>Testing phase insights</td>
-                        <td>Review</td>
-                        <td>Additional analysis needed</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-        
-        <div class="table-section">
-            <h3>Table 2: Experiment Data</h3>
-            <table id="T2">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Text</th>
-                        <th>Result</th>
-                        <th>Remark</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>001</td>
-                        <td>Promising experimental results</td>
-                        <td>Positive</td>
-                        <td>Exceeded performance by 15%</td>
-                    </tr>
-                    <tr>
-                        <td>002</td>
-                        <td>Sample requiring verification</td>
-                        <td>Pending</td>
-                        <td>Secondary validation scheduled</td>
-                    </tr>
-                    <tr>
-                        <td>003</td>
-                        <td>Control group baseline</td>
-                        <td>Stable</td>
-                        <td>Consistent performance</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-        
-        <div class="legend">
-            <h4>Reference Syntax Guide</h4>
-            <p><code>I(table, id)</code> - Reference by ID value</p>
-            <p><code>R(table, row)</code> - Reference by row number</p>
-            <p><code>I(table, id, col)</code> - Single row, single column</p>
-            <p><code>I(table, id, col1+col2)</code> - Single row, multiple columns (using +)</p>
-            <p><code>I(table, id1+id2, col)</code> - Multiple rows, single column (using +) - separate lines</p>
-            <p><code>I(table, id1+id2, col1+col2)</code> - Multiple rows, multiple columns</p>
-            <p><code>R(table, row1-row3, col)</code> - Row range (using -), e.g., 1-3 = rows 1,2,3</p>
-            <p><code>I(table, id1-id3, col1-col3)</code> - ID range and column range</p>
-            <p><code>R(table, 1-3+5, 2-4)</code> - Mixed: range + individual values</p>
-            <p><code>I(table, id1*id2, col)</code> - Continuous display (using *) - content on same line</p>
-            <p><code>I(table, id1*id2+id3, col)</code> - Mixed: id1*id2 on one line, id3 on new line</p>
-            <p><code>I(table, all, all)</code> - All rows and all columns of the table</p>
-            <p><code>R(table, all, col)</code> - All rows of the table for the specified column</p>
-        </div>
-        
-        <div class="narrative" style="margin-top: 20px;">
-            <h2>Auto-Linked Content Demo</h2>
-            <div id="autoLinkedDemo" class="auto-link-refs">
-                This text has auto-detected references: The experiment R(2,1-3,3) shows positive results. Compare I(1,1.0) with I(1,2.a) for validation insights. Full data available at I(2,001-003,1+3).<br>
-                Try these new examples: R(2,all,1) and I(1,all,all).
+            <div class="search-stats">
+                <span>Matches: <span class="count" id="matchCount">0</span></span>
+                <span>Current: <span class="count" id="currentMatch">0</span></span>
             </div>
-        </div>
-        
-        <div class="narrative" style="margin-top: 20px;">
-            <h2>External Content Container</h2>
-            <div id="externalContent" class="auto-link-refs">
-                <!-- Example content demonstrating references to external table data -->
-                <p>
-                    External table examples (from <code>datanoteU14.js</code>):
-                </p>
-                <ul>
-                    <li>Single cell (Name of Licence 1): <a class="link" data-ref="I(14,1,2)" href="#">I(14,1,2)</a></li>
-                    <li>Multiple columns (Name + Sex of Licence 1): <a class="link" data-ref="I(14,1,2+4)" href="#">I(14,1,2+4)</a></li>
-                    <li>Row range (Names of rows 1-3): <a class="link" data-ref="R(14,1-3,2)" href="#">R(14,1-3,2)</a></li>
-                    <li>All rows for Name column: <a class="link" data-ref="R(14,all,2)" href="#">R(14,all,2)</a></li>
-                    <li>Full table display: <a class="link" data-ref="I(14,all,all)" href="#">I(14,all,all)</a></li>
-                </ul>
+            <div class="search-nav">
+                <button id="prevMatch" disabled><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m18 15-6-6-6 6"/></svg></button>
+                <button id="nextMatch" disabled><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button>
             </div>
-        </div>
-        
-        <div class="narrative" style="margin-top: 20px;">
-            <h2>Markdown Content Container</h2>
-            <div id="markdownContent"></div>
+            <button class="btn btn-secondary btn-sm" id="clearSearch">Clear</button>
         </div>
     </div>
     
-    <div class="tooltip" id="tooltip"></div>
-    <div class="overlay" id="overlay"></div>
-    <div class="detail-panel" id="detailPanel">
-        <button class="close-btn" onclick="closeDetail()">Close</button>
-        <h3 id="detailTitle">Details</h3>
-        <div id="detailContent"></div>
+    <div class="controls-bar">
+        <div class="dropdown" id="tableDropdown">
+            <button onclick="toggleDropdown('tableDropdown')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+                Select Tables
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+            <div class="dropdown-menu" id="tableMenu"></div>
+        </div>
     </div>
     
-    <script>
-        let pyodide;
-        
-        async function initPyodide() {
-            pyodide = await loadPyodide();
-            
-            await pyodide.runPythonAsync(`
-def get_row_by_id(table_id, row_id):
-    """Find row by ID value"""
-    return {'table': table_id, 'id': row_id, 'type': 'id'}
+    <div class="card">
+        <h2>Reference Examples</h2>
+        <div class="ref-section"><h4>Basic (with metadata aliases)</h4><p class="auto-link">R(VR,2) = R(1,2) validation. I(ED,001) = I(2,001) experiment. R(PI,1,2) = R(3,1,2) product.</p></div>
+        <div class="ref-section"><h4>Multi-column</h4><p class="auto-link">Row data: I(1,1.0,1+3). Compare: R(ED,1+2,3). Range: R(SD,1-3,2+3). Products: I(PI,P001+P002,2+3).</p></div>
+        <div class="ref-section"><h4>Advanced</h4><p class="auto-link">Continuous: I(VR,1.0*2.a,2). All rows: R(2,all,1). Full data: I(EMP,all,all).</p></div>
+    </div>
+    
+    <div class="table-section" id="sec-T1">
+        <div class="table-header"><h3>Table 1: Validation Results</h3>
+            <div class="table-meta"><span class="row-count">Rows: <span id="count-T1">3</span></span>
+                <div class="table-actions">
+                    <div class="export-dropdown" id="export-T1"><button class="btn btn-secondary btn-sm" onclick="toggleDropdown('export-T1')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export</button>
+                        <div class="export-menu"><div class="export-item" onclick="exportTable('T1','json')"><code>JSON</code></div><div class="export-item" onclick="exportTable('T1','csv')"><code>CSV</code></div><div class="export-item" onclick="exportTable('T1','tsv')"><code>TSV</code></div><div class="export-item" onclick="exportTable('T1','md')"><code>MD</code></div></div></div>
+                    <button class="btn btn-secondary btn-sm" onclick="resetTable('T1')">Reset</button></div></div></div>
+        <div class="table-filter-ribbon" id="ribbon-T1">
+            <div class="ribbon-header" onclick="toggleTableRibbon('T1')"><h4><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>Advanced Filter (SQL-style)</h4><span class="ribbon-toggle" id="toggle-T1">▼</span></div>
+            <div class="ribbon-content" id="content-T1"><div class="ribbon-inner">
+                <div id="filter-rows-T1"></div>
+                <div class="filter-group"><button class="btn btn-sm" onclick="addFilterRow('T1')">+ Add Condition</button><button class="btn btn-success btn-sm" onclick="applyTableFilter('T1')">Apply</button><button class="btn btn-danger btn-sm" onclick="resetTable('T1')">Reset</button></div>
+            </div></div>
+        </div>
+        <div class="table-wrap"><table id="T1"><thead><tr><th data-col="0">ID<span class="sort-icon">↕</span></th><th data-col="1">Text<span class="sort-icon">↕</span></th><th data-col="2">Status<span class="sort-icon">↕</span></th><th data-col="3">Remark<span class="sort-icon">↕</span></th></tr></thead>
+        <tbody><tr><td>1.0</td><td>Primary validation completed</td><td>Passed</td><td>All criteria met</td></tr><tr><td>2.a</td><td>Performance metrics improved</td><td>Passed</td><td>20% increase</td></tr><tr><td>3.0.a.P</td><td>Testing phase insights</td><td>Review</td><td>Analysis needed</td></tr></tbody></table></div></div>
+    
+    <div class="table-section" id="sec-T2">
+        <div class="table-header"><h3>Table 2: Experiment Data</h3>
+            <div class="table-meta"><span class="row-count">Rows: <span id="count-T2">3</span></span>
+                <div class="table-actions">
+                    <div class="export-dropdown" id="export-T2"><button class="btn btn-secondary btn-sm" onclick="toggleDropdown('export-T2')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export</button>
+                        <div class="export-menu"><div class="export-item" onclick="exportTable('T2','json')"><code>JSON</code></div><div class="export-item" onclick="exportTable('T2','csv')"><code>CSV</code></div><div class="export-item" onclick="exportTable('T2','tsv')"><code>TSV</code></div><div class="export-item" onclick="exportTable('T2','md')"><code>MD</code></div></div></div>
+                    <button class="btn btn-secondary btn-sm" onclick="resetTable('T2')">Reset</button></div></div></div>
+        <div class="table-filter-ribbon" id="ribbon-T2">
+            <div class="ribbon-header" onclick="toggleTableRibbon('T2')"><h4><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>Advanced Filter (SQL-style)</h4><span class="ribbon-toggle" id="toggle-T2">▼</span></div>
+            <div class="ribbon-content" id="content-T2"><div class="ribbon-inner">
+                <div id="filter-rows-T2"></div>
+                <div class="filter-group"><button class="btn btn-sm" onclick="addFilterRow('T2')">+ Add Condition</button><button class="btn btn-success btn-sm" onclick="applyTableFilter('T2')">Apply</button><button class="btn btn-danger btn-sm" onclick="resetTable('T2')">Reset</button></div>
+            </div></div>
+        </div>
+        <div class="table-wrap"><table id="T2"><thead><tr><th data-col="0">ID<span class="sort-icon">↕</span></th><th data-col="1">Text<span class="sort-icon">↕</span></th><th data-col="2">Result<span class="sort-icon">↕</span></th><th data-col="3">Remark<span class="sort-icon">↕</span></th></tr></thead>
+        <tbody><tr><td>001</td><td>Promising experimental results</td><td>Positive</td><td>Exceeded by 15%</td></tr><tr><td>002</td><td>Sample requiring verification</td><td>Pending</td><td>Validation scheduled</td></tr><tr><td>003</td><td>Control group baseline</td><td>Stable</td><td>Consistent</td></tr></tbody></table></div></div>
+    
+    <div class="table-section" id="sec-T3">
+        <div class="table-header"><h3>Table 3: Product Inventory</h3>
+            <div class="table-meta"><span class="row-count">Rows: <span id="count-T3">5</span></span>
+                <div class="table-actions">
+                    <div class="export-dropdown" id="export-T3"><button class="btn btn-secondary btn-sm" onclick="toggleDropdown('export-T3')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export</button>
+                        <div class="export-menu"><div class="export-item" onclick="exportTable('T3','json')"><code>JSON</code></div><div class="export-item" onclick="exportTable('T3','csv')"><code>CSV</code></div><div class="export-item" onclick="exportTable('T3','tsv')"><code>TSV</code></div><div class="export-item" onclick="exportTable('T3','md')"><code>MD</code></div></div></div>
+                    <button class="btn btn-secondary btn-sm" onclick="resetTable('T3')">Reset</button></div></div></div>
+        <div class="table-filter-ribbon" id="ribbon-T3">
+            <div class="ribbon-header" onclick="toggleTableRibbon('T3')"><h4><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>Advanced Filter (SQL-style)</h4><span class="ribbon-toggle" id="toggle-T3">▼</span></div>
+            <div class="ribbon-content" id="content-T3"><div class="ribbon-inner">
+                <div id="filter-rows-T3"></div>
+                <div class="filter-group"><button class="btn btn-sm" onclick="addFilterRow('T3')">+ Add Condition</button><button class="btn btn-success btn-sm" onclick="applyTableFilter('T3')">Apply</button><button class="btn btn-danger btn-sm" onclick="resetTable('T3')">Reset</button></div>
+            </div></div>
+        </div>
+        <div class="table-wrap"><table id="T3"><thead><tr><th data-col="0">SKU<span class="sort-icon">↕</span></th><th data-col="1">Product<span class="sort-icon">↕</span></th><th data-col="2">Category<span class="sort-icon">↕</span></th><th data-col="3">Stock<span class="sort-icon">↕</span></th><th data-col="4">Price<span class="sort-icon">↕</span></th></tr></thead>
+        <tbody><tr><td>P001</td><td>Wireless Mouse</td><td>Electronics</td><td>150</td><td>$29.99</td></tr><tr><td>P002</td><td>Mechanical Keyboard</td><td>Electronics</td><td>85</td><td>$89.99</td></tr><tr><td>P003</td><td>USB-C Hub</td><td>Accessories</td><td>200</td><td>$45.00</td></tr><tr><td>P004</td><td>Monitor Stand</td><td>Furniture</td><td>45</td><td>$79.99</td></tr><tr><td>P005</td><td>Webcam HD</td><td>Electronics</td><td>120</td><td>$65.00</td></tr></tbody></table></div></div>
+    
+    <div class="table-section" id="sec-T4">
+        <div class="table-header"><h3>Table 4: Sales Data</h3>
+            <div class="table-meta"><span class="row-count">Rows: <span id="count-T4">4</span></span>
+                <div class="table-actions">
+                    <div class="export-dropdown" id="export-T4"><button class="btn btn-secondary btn-sm" onclick="toggleDropdown('export-T4')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export</button>
+                        <div class="export-menu"><div class="export-item" onclick="exportTable('T4','json')"><code>JSON</code></div><div class="export-item" onclick="exportTable('T4','csv')"><code>CSV</code></div><div class="export-item" onclick="exportTable('T4','tsv')"><code>TSV</code></div><div class="export-item" onclick="exportTable('T4','md')"><code>MD</code></div></div></div>
+                    <button class="btn btn-secondary btn-sm" onclick="resetTable('T4')">Reset</button></div></div></div>
+        <div class="table-filter-ribbon" id="ribbon-T4">
+            <div class="ribbon-header" onclick="toggleTableRibbon('T4')"><h4><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>Advanced Filter (SQL-style)</h4><span class="ribbon-toggle" id="toggle-T4">▼</span></div>
+            <div class="ribbon-content" id="content-T4"><div class="ribbon-inner">
+                <div id="filter-rows-T4"></div>
+                <div class="filter-group"><button class="btn btn-sm" onclick="addFilterRow('T4')">+ Add Condition</button><button class="btn btn-success btn-sm" onclick="applyTableFilter('T4')">Apply</button><button class="btn btn-danger btn-sm" onclick="resetTable('T4')">Reset</button></div>
+            </div></div>
+        </div>
+        <div class="table-wrap"><table id="T4"><thead><tr><th data-col="0">Quarter<span class="sort-icon">↕</span></th><th data-col="1">Region<span class="sort-icon">↕</span></th><th data-col="2">Revenue<span class="sort-icon">↕</span></th><th data-col="3">Growth<span class="sort-icon">↕</span></th></tr></thead>
+        <tbody><tr><td>Q1</td><td>North America</td><td>$1.2M</td><td>+12%</td></tr><tr><td>Q2</td><td>Europe</td><td>$890K</td><td>+8%</td></tr><tr><td>Q3</td><td>Asia Pacific</td><td>$1.5M</td><td>+22%</td></tr><tr><td>Q4</td><td>Latin America</td><td>$650K</td><td>+5%</td></tr></tbody></table></div></div>
+    
+    <div class="table-section" id="sec-T5">
+        <div class="table-header"><h3>Table 5: Employee Directory</h3>
+            <div class="table-meta"><span class="row-count">Rows: <span id="count-T5">6</span></span>
+                <div class="table-actions">
+                    <div class="export-dropdown" id="export-T5"><button class="btn btn-secondary btn-sm" onclick="toggleDropdown('export-T5')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export</button>
+                        <div class="export-menu"><div class="export-item" onclick="exportTable('T5','json')"><code>JSON</code></div><div class="export-item" onclick="exportTable('T5','csv')"><code>CSV</code></div><div class="export-item" onclick="exportTable('T5','tsv')"><code>TSV</code></div><div class="export-item" onclick="exportTable('T5','md')"><code>MD</code></div></div></div>
+                    <button class="btn btn-secondary btn-sm" onclick="resetTable('T5')">Reset</button></div></div></div>
+        <div class="table-filter-ribbon" id="ribbon-T5">
+            <div class="ribbon-header" onclick="toggleTableRibbon('T5')"><h4><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>Advanced Filter (SQL-style)</h4><span class="ribbon-toggle" id="toggle-T5">▼</span></div>
+            <div class="ribbon-content" id="content-T5"><div class="ribbon-inner">
+                <div id="filter-rows-T5"></div>
+                <div class="filter-group"><button class="btn btn-sm" onclick="addFilterRow('T5')">+ Add Condition</button><button class="btn btn-success btn-sm" onclick="applyTableFilter('T5')">Apply</button><button class="btn btn-danger btn-sm" onclick="resetTable('T5')">Reset</button></div>
+            </div></div>
+        </div>
+        <div class="table-wrap"><table id="T5"><thead><tr><th data-col="0">EmpID<span class="sort-icon">↕</span></th><th data-col="1">Name<span class="sort-icon">↕</span></th><th data-col="2">Dept<span class="sort-icon">↕</span></th><th data-col="3">Role<span class="sort-icon">↕</span></th><th data-col="4">Status<span class="sort-icon">↕</span></th></tr></thead>
+        <tbody><tr><td>E001</td><td>Alice Johnson</td><td>Engineering</td><td>Senior Dev</td><td>Active</td></tr><tr><td>E002</td><td>Bob Smith</td><td>Marketing</td><td>Manager</td><td>Active</td></tr><tr><td>E003</td><td>Carol White</td><td>Engineering</td><td>Lead Dev</td><td>Active</td></tr><tr><td>E004</td><td>David Brown</td><td>Sales</td><td>Executive</td><td>On Leave</td></tr><tr><td>E005</td><td>Eva Martinez</td><td>HR</td><td>Director</td><td>Active</td></tr><tr><td>E006</td><td>Frank Lee</td><td>Engineering</td><td>Junior Dev</td><td>Active</td></tr></tbody></table></div></div>
+    
+    <div class="legend"><h4>Reference Syntax</h4>
+        <div class="legend-grid">
+            <p><code>I(t, id)</code> By ID</p><p><code>R(t, row)</code> By row#</p>
+            <p><code>I(t, id, col1+col2)</code> Multi-col</p><p><code>R(t, 1-3, col)</code> Range</p>
+            <p><code>I(t, id1*id2, col)</code> Continuous</p><p><code>R(t, all, all)</code> Full table</p>
+        </div>
+    </div>
+</div>
 
-def get_row_by_number(table_id, row_num):
-    """Find row by row number (1-indexed)"""
-    return {'table': table_id, 'row': row_num, 'type': 'row'}
-            `);
-            
-            setupEventListeners();
-        }
-        
-        function setupEventListeners() {
-            const links = document.querySelectorAll('.link');
-            
-            links.forEach(link => {
-                link.addEventListener('mouseenter', (e) => showTooltip(e, link));
-                link.addEventListener('mouseleave', hideTooltip);
-                link.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    showDetail(link);
-                });
-            });
-            
-            document.getElementById('overlay').addEventListener('click', closeDetail);
-        }
-        
-        function expandRange(str, isNumeric = true) {
-            // Expand range syntax: "1-3" becomes ["1","2","3"], "001-003" becomes ["001","002","003"]
-            // Also handles + syntax: "1+2+3" or mixed "1-3+5"
-            // Also handles * syntax: "1.0*2.a" for continuous display (returns object with flag)
-            // Mixed: "1.0*2.a+3.0.a.P" means 1.0 and 2.a on same line, 3.0.a.P on new line
-            
-            // Split by + first to get separate line groups
-            const plusParts = str.split('+').map(p => p.trim());
-            const result = [];
-            let continuousGroups = []; // Track which items should be displayed continuously
-            
-            for (const plusPart of plusParts) {
-                if (plusPart.includes('*')) {
-                    // This is a continuous group (items joined by *)
-                    const continuousItems = plusPart.split('*').map(s => s.trim());
-                    const groupStart = result.length;
-                    
-                    continuousItems.forEach(item => {
-                        if (item.includes('-')) {
-                            // Handle range within continuous group
-                            const expanded = expandRangeSimple(item, isNumeric);
-                            result.push(...expanded);
-                        } else {
-                            result.push(item);
-                        }
-                    });
-                    
-                    // Mark this group as continuous (start to end indices)
-                    continuousGroups.push({ start: groupStart, end: result.length - 1 });
-                } else if (plusPart.includes('-')) {
-                    // Range without continuous - each item is separate
-                    const expanded = expandRangeSimple(plusPart, isNumeric);
-                    result.push(...expanded);
-                } else {
-                    // Single item
-                    result.push(plusPart);
-                }
-            }
-            
-            const hasContinuous = continuousGroups.length > 0;
-            
-            return { values: result, continuousGroups, hasContinuous };
-        }
-        
-        function expandRangeSimple(part, isNumeric) {
-            // Simple range expansion helper
-            const result = [];
-            const [startStr, endStr] = part.split('-').map(s => s.trim());
-            
-            if (isNumeric) {
-                // Numeric range (for row numbers or column numbers)
-                const start = parseInt(startStr);
-                const end = parseInt(endStr);
-                // Preserve leading zeros if present
-                const padLength = startStr.length;
-                for (let i = start; i <= end; i++) {
-                    result.push(String(i).padStart(padLength, '0'));
-                }
-            } else {
-                // ID range - try to detect numeric suffix pattern
-                const startMatch = startStr.match(/^(.*?)(\d+)$/);
-                const endMatch = endStr.match(/^(.*?)(\d+)$/);
-                
-                if (startMatch && endMatch && startMatch[1] === endMatch[1]) {
-                    // Same prefix, numeric suffix
-                    const prefix = startMatch[1];
-                    const startNum = parseInt(startMatch[2]);
-                    const endNum = parseInt(endMatch[2]);
-                    const padLength = startMatch[2].length;
-                    
-                    for (let i = startNum; i <= endNum; i++) {
-                        result.push(prefix + String(i).padStart(padLength, '0'));
-                    }
-                } else {
-                    // Can't expand, just add as-is
-                    result.push(part);
-                }
-            }
-            return result;
-        }
-        
-        function parseReference(ref) {
-            // Parse format: I(tableNum, id) or R(tableNum, rowNum) or with column(s)
-            // Supports multiple values with + separator and - range for both rows and columns
-            // Supports * for continuous display (no line breaks)
-            // Adds support for "all" to represent all rows or all columns
-            // Examples: I(1,1.0), R(1,2), I(1,1.0,2), R(1,2,3), 
-            //           I(2,001+002,3), R(1,1+2+3), I(1,1.0,1+3), I(2,001+002,3+4)
-            //           R(1,1-3,3) - rows 1 to 3, column 3
-            //           I(2,001-003,3+4) - IDs 001 to 003, columns 3 and 4
-            //           I(1,1.0*2.a) - IDs 1.0 and 2.a displayed continuously
-            //           I(1,all,all) - all rows and all columns
-            const match = ref.match(/([IR])\((\d+),([^,\)]+)(?:,([^,\)]+))?\)/);
-            if (!match) return null;
-            
-            const refType = match[1]; // 'I' for ID, 'R' for Row
-            const tableNum = match[2];
-            const valueStr = match[3].trim();
-            const colStr = match[4] ? match[4].trim() : null; // Optional column(s)
-            
-            // Handle special token 'all' for rows
-            let rowValues = [];
-            let continuousGroups = [];
-            let hasContinuous = false;
-            let isAllRows = false;
+<div class="tooltip" id="tooltip"></div>
+<div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
+    <div class="modal"><div class="modal-header"><h3 id="modalTitle">Details</h3><button class="modal-close" onclick="closeModal()">×</button></div><div id="modalContent"></div></div>
+</div>
+<div class="toast" id="toast"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg><span id="toastMsg"></span></div>
 
-            if (valueStr.toLowerCase() === 'all') {
-                isAllRows = true;
-                rowValues = ['all'];
-            } else {
-                const rowExpanded = expandRange(valueStr, refType === 'R');
-                rowValues = rowExpanded.values;
-                continuousGroups = rowExpanded.continuousGroups;
-                hasContinuous = rowExpanded.hasContinuous;
-            }
-            
-            // Expand column numbers (always numeric), and support 'all' for columns
-            let colNums = null;
-            let allCols = false;
-            if (colStr) {
-                if (colStr.toLowerCase() === 'all') {
-                    allCols = true;
-                } else {
-                    const colExpanded = expandRange(colStr, true);
-                    colNums = colExpanded.values.map(c => parseInt(c));
-                }
-            }
-            
-            // Get table by number (1-indexed). Prefer an explicit table id like 'T14' if present.
-            let tableId = null;
-            const explicitTable = document.getElementById('T' + tableNum);
-            if (explicitTable) {
-                tableId = explicitTable.id;
-            } else {
-                const tables = document.querySelectorAll('table');
-                tableId = tables[tableNum - 1]?.id;
-            }
-            
-            return { 
-                tableId, 
-                refType, 
-                rowValues, 
-                colNums,
-                isAllRows,
-                allCols,
-                isMultiRow: rowValues.length > 1 && !isAllRows,
-                isMultiCol: (colNums && colNums.length > 1) || allCols,
-                continuousGroups,
-                hasContinuous
-            };
-        }
-        
-        function findRow(tableId, refType, value) {
-            const table = document.getElementById(tableId);
-            if (!table) return null;
-            
-            const tbody = table.querySelector('tbody');
-            
-            if (refType === 'R') {
-                // Row number reference
-                const rowNum = parseInt(value);
-                return tbody.rows[rowNum - 1]; // Convert to 0-indexed
-            } else if (refType === 'I') {
-                // ID reference - search for it in first column
-                const rows = tbody.querySelectorAll('tr');
-                for (let row of rows) {
-                    if (row.cells[0].textContent === value) {
-                        return row;
-                    }
-                }
-            }
-            
-            return null;
-        }
-        
-        function findRows(link) {
-            const ref = link.getAttribute('data-ref');
-            const parsed = parseReference(ref);
-            if (!parsed) return [];
-            
-            const rows = [];
-            const table = document.getElementById(parsed.tableId);
-            if (!table) return rows;
-            const tbody = table.querySelector('tbody');
-            if (!tbody) return rows;
-            
-            // If 'all' rows requested, return every row in the tbody
-            if (parsed.isAllRows) {
-                const allRows = Array.from(tbody.querySelectorAll('tr'));
-                for (const tr of allRows) {
-                    const id = tr.cells[0]?.textContent || '';
-                    rows.push({ row: tr, value: id });
-                }
-                return rows;
-            }
+<script>
+const $=s=>document.querySelector(s),$$=s=>document.querySelectorAll(s);
+let matches=[],currentIdx=-1,sortState={};
 
-            for (const value of parsed.rowValues) {
-                const row = findRow(parsed.tableId, parsed.refType, value);
-                if (row) {
-                    rows.push({ row, value });
-                }
-            }
-            
-            return rows;
+// TABLE METADATA - maps aliases to table IDs
+const tableMeta={
+    'VR':'T1','validation':'T1','T1':'T1','1':'T1',
+    'ED':'T2','experiment':'T2','T2':'T2','2':'T2',
+    'PI':'T3','product':'T3','inventory':'T3','T3':'T3','3':'T3',
+    'SD':'T4','sales':'T4','T4':'T4','4':'T4',
+    'EMP':'T5','employee':'T5','directory':'T5','T5':'T5','5':'T5'
+};
+
+// GLOBAL SEARCH
+function clearHighlights(){$$('.highlight-match,.highlight-current').forEach(el=>{const p=el.parentNode;p.replaceChild(document.createTextNode(el.textContent),el);p.normalize()});}
+function highlightMatches(q){
+    clearHighlights();matches=[];currentIdx=-1;
+    if(!q.trim()){updateSearchUI();return;}
+    const regex=new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`,'gi');
+    const walk=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT,{acceptNode:n=>n.parentElement.closest('.search-input-wrap,script,style,#tooltip,.modal')?NodeFilter.FILTER_REJECT:NodeFilter.FILTER_ACCEPT});
+    const nodes=[];while(walk.nextNode())nodes.push(walk.currentNode);
+    nodes.forEach(node=>{
+        if(!regex.test(node.textContent))return;regex.lastIndex=0;
+        const frag=document.createDocumentFragment();let last=0,m;
+        while((m=regex.exec(node.textContent))){
+            if(m.index>last)frag.appendChild(document.createTextNode(node.textContent.slice(last,m.index)));
+            const span=document.createElement('span');span.className='highlight-match';span.textContent=m[1];
+            frag.appendChild(span);matches.push(span);last=m.index+m[0].length;
         }
-        
-        function getHeaders(tableId) {
-            const table = document.getElementById(tableId);
-            if (!table) return [];
-            return Array.from(table.querySelectorAll('th')).map(th => th.textContent);
+        if(last<node.textContent.length)frag.appendChild(document.createTextNode(node.textContent.slice(last)));
+        node.parentNode.replaceChild(frag,node);
+    });
+    if(matches.length)goToMatch(0);updateSearchUI();
+}
+function goToMatch(idx){if(!matches.length)return;matches.forEach(m=>m.classList.remove('highlight-current'));currentIdx=(idx+matches.length)%matches.length;matches[currentIdx].classList.add('highlight-current');matches[currentIdx].scrollIntoView({behavior:'smooth',block:'center'});updateSearchUI();}
+function updateSearchUI(){$('#matchCount').textContent=matches.length;$('#currentMatch').textContent=matches.length?currentIdx+1:0;$('#prevMatch').disabled=$('#nextMatch').disabled=!matches.length;}
+let searchTO;$('#globalSearch').addEventListener('input',e=>{clearTimeout(searchTO);searchTO=setTimeout(()=>highlightMatches(e.target.value),200);});
+$('#prevMatch').onclick=()=>goToMatch(currentIdx-1);$('#nextMatch').onclick=()=>goToMatch(currentIdx+1);
+$('#clearSearch').onclick=()=>{$('#globalSearch').value='';clearHighlights();matches=[];updateSearchUI();};
+document.addEventListener('keydown',e=>{if(e.ctrlKey&&e.key==='f'){e.preventDefault();$('#globalSearch').focus();}if(document.activeElement===$('#globalSearch')&&e.key==='Enter'){e.shiftKey?goToMatch(currentIdx-1):goToMatch(currentIdx+1);}});
+
+// PER-TABLE ADVANCED FILTERS
+const tableFilters={};// {T1:{logic:'AND',conditions:[{col,op,val}]}, ...}
+
+function toggleTableRibbon(tid){
+    const content=$(`#content-${tid}`),toggle=$(`#toggle-${tid}`);
+    content.classList.toggle('open');
+    toggle.textContent=content.classList.contains('open')?'▲':'▼';
+}
+
+function getTableHeaders(tid){
+    return[...$(`#${tid}`).querySelectorAll('th')].map(h=>h.textContent.replace('↕','').trim());
+}
+
+function addFilterRow(tid){
+    if(!tableFilters[tid])tableFilters[tid]={logic:'AND',conditions:[]};
+    const headers=getTableHeaders(tid);
+    const container=$(`#filter-rows-${tid}`);
+    const idx=tableFilters[tid].conditions.length;
+    const defaultLogic=idx===0?'':'AND';
+    tableFilters[tid].conditions.push({col:0,op:'contains',val:'',logic:defaultLogic});
+    const row=document.createElement('div');
+    row.className='filter-row';
+    row.dataset.idx=idx;
+    row.innerHTML=`
+        ${idx>0?`<select class="filter-logic" data-tid="${tid}" data-idx="${idx}">
+            <option value="AND">AND</option>
+            <option value="OR">OR</option>
+            <option value="NOT">NOT</option>
+        </select>`:'<span style="width:60px;color:var(--accent3);font-weight:500">WHERE</span>'}
+        <select class="filter-col" data-tid="${tid}" data-idx="${idx}">${headers.map((h,i)=>`<option value="${i}">${h}</option>`).join('')}</select>
+        <select class="filter-op" data-tid="${tid}" data-idx="${idx}">
+            <option value="contains">contains</option>
+            <option value="equals">equals</option>
+            <option value="starts">starts with</option>
+            <option value="ends">ends with</option>
+            <option value="gt">></option>
+            <option value="lt"><</option>
+            <option value="gte">>=</option>
+            <option value="lte"><=</option>
+            <option value="neq">!=</option>
+            <option value="empty">is empty</option>
+            <option value="notempty">not empty</option>
+        </select>
+        <input type="text" class="filter-val" placeholder="Value..." data-tid="${tid}" data-idx="${idx}">
+        <button class="remove-filter" onclick="removeFilterRow('${tid}',${idx})">×</button>`;
+    container.appendChild(row);
+    bindFilterRowEvents(row,tid,idx);
+}
+
+function bindFilterRowEvents(row,tid,idx){
+    const logicSel=row.querySelector('.filter-logic');
+    if(logicSel)logicSel.onchange=e=>{tableFilters[tid].conditions[idx].logic=e.target.value;};
+    row.querySelector('.filter-col').onchange=e=>{tableFilters[tid].conditions[idx].col=+e.target.value;};
+    row.querySelector('.filter-op').onchange=e=>{tableFilters[tid].conditions[idx].op=e.target.value;};
+    row.querySelector('.filter-val').oninput=e=>{tableFilters[tid].conditions[idx].val=e.target.value;};
+}
+
+function removeFilterRow(tid,idx){
+    tableFilters[tid].conditions.splice(idx,1);
+    rebuildFilterRows(tid);
+}
+
+function rebuildFilterRows(tid){
+    const container=$(`#filter-rows-${tid}`);
+    container.innerHTML='';
+    const headers=getTableHeaders(tid);
+    tableFilters[tid].conditions.forEach((cond,idx)=>{
+        const row=document.createElement('div');
+        row.className='filter-row';
+        row.dataset.idx=idx;
+        row.innerHTML=`
+            ${idx>0?`<select class="filter-logic" data-tid="${tid}" data-idx="${idx}">
+                <option value="AND"${cond.logic==='AND'?' selected':''}>AND</option>
+                <option value="OR"${cond.logic==='OR'?' selected':''}>OR</option>
+                <option value="NOT"${cond.logic==='NOT'?' selected':''}>NOT</option>
+            </select>`:'<span style="width:60px;color:var(--accent3);font-weight:500">WHERE</span>'}
+            <select class="filter-col" data-tid="${tid}" data-idx="${idx}">${headers.map((h,i)=>`<option value="${i}"${i===cond.col?' selected':''}>${h}</option>`).join('')}</select>
+            <select class="filter-op" data-tid="${tid}" data-idx="${idx}">
+                <option value="contains"${cond.op==='contains'?' selected':''}>contains</option>
+                <option value="equals"${cond.op==='equals'?' selected':''}>equals</option>
+                <option value="starts"${cond.op==='starts'?' selected':''}>starts with</option>
+                <option value="ends"${cond.op==='ends'?' selected':''}>ends with</option>
+                <option value="gt"${cond.op==='gt'?' selected':''}>&gt;</option>
+                <option value="lt"${cond.op==='lt'?' selected':''}>&lt;</option>
+                <option value="gte"${cond.op==='gte'?' selected':''}>&gt;=</option>
+                <option value="lte"${cond.op==='lte'?' selected':''}>&lt;=</option>
+                <option value="neq"${cond.op==='neq'?' selected':''}>!=</option>
+                <option value="empty"${cond.op==='empty'?' selected':''}>is empty</option>
+                <option value="notempty"${cond.op==='notempty'?' selected':''}>not empty</option>
+            </select>
+            <input type="text" class="filter-val" value="${cond.val}" placeholder="Value..." data-tid="${tid}" data-idx="${idx}">
+            <button class="remove-filter" onclick="removeFilterRow('${tid}',${idx})">×</button>`;
+        container.appendChild(row);
+        bindFilterRowEvents(row,tid,idx);
+    });
+}
+
+function evalCondition(cellVal,op,filterVal){
+    const cv=cellVal.toLowerCase(),fv=filterVal.toLowerCase();
+    const cn=parseFloat(cellVal.replace(/[^0-9.-]/g,'')),fn=parseFloat(filterVal);
+    switch(op){
+        case'contains':return cv.includes(fv);
+        case'equals':return cv===fv;
+        case'starts':return cv.startsWith(fv);
+        case'ends':return cv.endsWith(fv);
+        case'gt':return!isNaN(cn)&&!isNaN(fn)&&cn>fn;
+        case'lt':return!isNaN(cn)&&!isNaN(fn)&&cn<fn;
+        case'gte':return!isNaN(cn)&&!isNaN(fn)&&cn>=fn;
+        case'lte':return!isNaN(cn)&&!isNaN(fn)&&cn<=fn;
+        case'neq':return cv!==fv;
+        case'empty':return cellVal.trim()==='';
+        case'notempty':return cellVal.trim()!=='';
+        default:return true;
+    }
+}
+
+function applyTableFilter(tid){
+    if(!tableFilters[tid]||!tableFilters[tid].conditions.length){
+        $(`#${tid}`).querySelectorAll('tbody tr').forEach(tr=>tr.classList.remove('filtered-out'));
+        updateRowCounts();return;
+    }
+    const conditions=tableFilters[tid].conditions.filter(c=>c.val||c.op==='empty'||c.op==='notempty');
+    $(`#${tid}`).querySelectorAll('tbody tr').forEach(tr=>{
+        if(!conditions.length){tr.classList.remove('filtered-out');return;}
+        // Evaluate first condition
+        let result=evalCondition(tr.cells[conditions[0].col]?.textContent||'',conditions[0].op,conditions[0].val);
+        // Chain remaining conditions with their logic
+        for(let i=1;i<conditions.length;i++){
+            const cond=conditions[i];
+            const match=evalCondition(tr.cells[cond.col]?.textContent||'',cond.op,cond.val);
+            if(cond.logic==='AND')result=result&&match;
+            else if(cond.logic==='OR')result=result||match;
+            else if(cond.logic==='NOT')result=result&&!match;
         }
-        
-        function getCellContents(link) {
-            const ref = link.getAttribute('data-ref');
-            const parsed = parseReference(ref);
-            const rowData = findRows(link);
-            const headers = getHeaders(parsed.tableId);
-            
-            if (rowData.length === 0) return [];
-            
-            const contents = [];
-            for (const { row, value } of rowData) {
-                const rowContent = {
-                    id: value,
-                    columns: []
-                };
-                
-                if (parsed.colNums !== null) {
-                    // Specific column(s) requested
-                    for (const colNum of parsed.colNums) {
-                        const cellIndex = colNum - 1; // Convert to 0-indexed
-                        rowContent.columns.push({
-                            colNum: colNum,
-                            header: headers[cellIndex] || `Column ${colNum}`,
-                            content: row.cells[cellIndex]?.textContent || 'N/A'
-                        });
-                    }
-                } else if (parsed.allCols) {
-                    // All columns requested
-                    const cells = row.querySelectorAll('td');
-                    for (let i = 0; i < cells.length; i++) {
-                        rowContent.columns.push({
-                            colNum: i + 1,
-                            header: headers[i] || `Column ${i + 1}`,
-                            content: cells[i]?.textContent || 'N/A'
-                        });
-                    }
-                } else {
-                    // Default: return Text column (column 2)
-                    rowContent.columns.push({
-                        colNum: 2,
-                        header: headers[1] || 'Text',
-                        content: row.cells[1]?.textContent || 'N/A'
-                    });
-                }
-                
-                contents.push(rowContent);
-            }
-            
-            return contents;
-        }
-        
-        function showTooltip(e, link) {
-            const contents = getCellContents(link);
-            const parsed = parseReference(link.getAttribute('data-ref'));
-            
-            if (contents.length > 0) {
-                const tooltip = document.getElementById('tooltip');
-                
-                // Check if we have continuous groups with mixed + syntax
-                if (parsed && parsed.hasContinuous && parsed.continuousGroups.length > 0) {
-                    // Build tooltip respecting continuous groups
-                    let html = '';
-                    let i = 0;
-                    
-                    while (i < contents.length) {
-                        const continuousGroup = parsed.continuousGroups.find(g => i >= g.start && i <= g.end);
-                        
-                        if (continuousGroup && i === continuousGroup.start) {
-                            // Continuous group - join content on same line
-                            const groupContent = [];
-                            for (let j = continuousGroup.start; j <= continuousGroup.end; j++) {
-                                groupContent.push(contents[j].columns.map(col => col.content).join(' '));
-                            }
-                            html += `<div class="tooltip-item">${groupContent.join(' ')}</div>`;
-                            i = continuousGroup.end + 1;
-                        } else if (!continuousGroup) {
-                            // Not in continuous group - separate line
-                            html += `<div class="tooltip-item">${contents[i].columns.map(col => col.content).join(' ')}</div>`;
-                            i++;
-                        } else {
-                            i++;
-                        }
-                    }
-                    tooltip.innerHTML = html;
-                }
-                // Single row, single column - simple display
-                else if (contents.length === 1 && contents[0].columns.length === 1) {
-                    tooltip.innerHTML = contents[0].columns[0].content;
-                } 
-                // Single row, multiple columns
-                else if (contents.length === 1) {
-                    let html = `<div class="tooltip-item">`;
-                    for (const col of contents[0].columns) {
-                        html += `<div class="tooltip-col">
-                            <span class="tooltip-col-label">${col.header}:</span> ${col.content}
-                        </div>`;
-                    }
-                    html += '</div>';
-                    tooltip.innerHTML = html;
-                }
-                // Multiple rows
-                else {
-                    let html = '';
-                    for (const item of contents) {
-                        html += `<div class="tooltip-item">
-                            <div class="tooltip-row-label">${item.id}</div>`;
-                        for (const col of item.columns) {
-                            html += `<div class="tooltip-col">
-                                <span class="tooltip-col-label">${col.header}:</span> ${col.content}
-                            </div>`;
-                        }
-                        html += '</div>';
-                    }
-                    tooltip.innerHTML = html;
-                }
-                
-                tooltip.style.display = 'block';
-                tooltip.style.left = Math.min(e.clientX, window.innerWidth - 520) + 'px';
-                tooltip.style.top = (e.clientY + 20) + 'px';
-            }
-        }
-        
-        function hideTooltip() {
-            document.getElementById('tooltip').style.display = 'none';
-        }
-        
-        function showDetail(link) {
-            const rowData = findRows(link);
-            
-            if (rowData.length > 0) {
-                const parsed = parseReference(link.getAttribute('data-ref'));
-                const table = document.getElementById(parsed.tableId);
-                const headers = Array.from(table.querySelectorAll('th'));
-                
-                let html = '';
-                
-                // Clear previous highlights
-                document.querySelectorAll('tbody tr').forEach(tr => tr.classList.remove('highlight'));
-                document.querySelectorAll('tbody td').forEach(td => td.classList.remove('highlight-cell'));
-                
-                // Determine column header name for display
-                let columnHeaderName = 'Text'; // Default
-                if (parsed.colNums && parsed.colNums.length > 0) {
-                    const headerNames = parsed.colNums.map(colNum => headers[colNum - 1]?.textContent || `Column ${colNum}`);
-                    columnHeaderName = headerNames.join(', ');
-                } else if (parsed.allCols) {
-                    columnHeaderName = 'All Columns';
-                }
-                
-                // Check if we have continuous groups
-                if (parsed.hasContinuous && parsed.continuousGroups.length > 0) {
-                    // Process items respecting continuous groups
-                    // Items in same continuous group go on same line
-                    // Items separated by + go on different lines
-                    
-                    html += `<div class="detail-group">
-                        <div class="detail-group-title">${columnHeaderName}</div>`;
-                    
-                    let currentIndex = 0;
-                    
-                    for (let i = 0; i < rowData.length; i++) {
-                        const { row, value } = rowData[i];
-                        const cells = row.querySelectorAll('td');
-                        
-                        // Highlight row
-                        row.classList.add('highlight');
-                        
-                        // Highlight specific cells if columns specified, or all columns if requested
-                        if (parsed.colNums) {
-                            for (const colNum of parsed.colNums) {
-                                const cellIndex = colNum - 1;
-                                if (cells[cellIndex]) {
-                                    cells[cellIndex].classList.add('highlight-cell');
-                                }
-                            }
-                        } else if (parsed.allCols) {
-                            Array.from(cells).forEach(c => c.classList.add('highlight-cell'));
-                        }
-                        
-                        // Check if this index is part of a continuous group
-                        const continuousGroup = parsed.continuousGroups.find(g => i >= g.start && i <= g.end);
-                        
-                        if (continuousGroup && i === continuousGroup.start) {
-                            // Start of a continuous group - collect all items in this group
-                            const groupContents = [];
-                            for (let j = continuousGroup.start; j <= continuousGroup.end; j++) {
-                                const groupRow = rowData[j].row;
-                                const groupCells = groupRow.querySelectorAll('td');
-                                
-                                if (parsed.colNums) {
-                                    for (const colNum of parsed.colNums) {
-                                        const cellIndex = colNum - 1;
-                                        groupContents.push(groupCells[cellIndex]?.textContent || 'N/A');
-                                    }
-                                } else if (parsed.allCols) {
-                                    // Push all columns for this row
-                                    for (let k = 0; k < groupCells.length; k++) {
-                                        groupContents.push(groupCells[k]?.textContent || 'N/A');
-                                    }
-                                } else {
-                                    groupContents.push(groupCells[1]?.textContent || 'N/A');
-                                }
-                            }
-                            
-                            html += `<div class="detail-row highlighted">
-                                <span>${groupContents.join(' ')}</span>
-                            </div>`;
-                            
-                            // Skip to end of this group
-                            i = continuousGroup.end;
-                        } else if (!continuousGroup) {
-                            // Not part of any continuous group - display on its own line
-                            const contentParts = [];
-                            if (parsed.colNums) {
-                                for (const colNum of parsed.colNums) {
-                                    const cellIndex = colNum - 1;
-                                    contentParts.push(cells[cellIndex]?.textContent || 'N/A');
-                                }
-                            } else if (parsed.allCols) {
-                                for (let k = 0; k < cells.length; k++) {
-                                    contentParts.push(cells[k]?.textContent || 'N/A');
-                                }
-                            } else {
-                                contentParts.push(cells[1]?.textContent || 'N/A');
-                            }
-                            
-                            html += `<div class="detail-row highlighted">
-                                <span>${contentParts.join(' ')}</span>
-                            </div>`;
-                        }
-                        // If inside a continuous group but not at start, skip (handled above)
-                    }
-                    
-                    html += '</div>';
-                } else {
-                    // Normal display - separate groups for each row
-                    for (const { row, value } of rowData) {
-                        const cells = row.querySelectorAll('td');
-                        
-                        // Highlight row
-                        row.classList.add('highlight');
-                        
-                        // Highlight specific cells if columns specified (or all columns if requested)
-                        if (parsed.colNums) {
-                            for (const colNum of parsed.colNums) {
-                                const cellIndex = colNum - 1;
-                                if (cells[cellIndex]) {
-                                    cells[cellIndex].classList.add('highlight-cell');
-                                }
-                            }
-                        } else if (parsed.allCols) {
-                            Array.from(cells).forEach(c => c.classList.add('highlight-cell'));
-                        }
-                        
-                        html += `<div class="detail-group">
-                            <div class="detail-group-title">${cells[0].textContent}</div>`;
-                        
-                        if (parsed.colNums !== null) {
-                            // Show only specified columns
-                            for (const colNum of parsed.colNums) {
-                                const cellIndex = colNum - 1;
-                                const cellContent = cells[cellIndex]?.textContent || 'N/A';
-                                const headerName = headers[cellIndex]?.textContent || `Column ${colNum}`;
-                                
-                                html += `<div class="detail-row highlighted">
-                                    <span class="detail-label">${headerName}:</span>
-                                    ${cellContent}
-                                </div>`;
-                            }
-                        } else {
-                            // Show all columns
-                            for (let i = 0; i < cells.length; i++) {
-                                html += `
-                                    <div class="detail-row">
-                                        <span class="detail-label">${headers[i].textContent}:</span>
-                                        ${cells[i].textContent}
-                                    </div>
-                                `;
-                            }
-                        }
-                        html += '</div>';
-                    }
-                }
-                
-                // Set title based on reference type
-                let title = '';
-                if (parsed.hasContinuous) {
-                    title = `${columnHeaderName}: ${rowData.map(r => r.value).join(', ')}`;
-                } else if (rowData.length === 1 && (!parsed.colNums || parsed.colNums.length === 1)) {
-                    title = `Details: ${rowData[0].value}`;
-                } else if (rowData.length === 1) {
-                    title = `${rowData[0].value} - Selected Columns`;
-                } else if (!parsed.colNums || parsed.colNums.length === 1) {
-                    title = `Comparison: ${rowData.map(r => r.value).join(' & ')}`;
-                } else {
-                    title = `Multi-Row Multi-Column: ${rowData.map(r => r.value).join(' & ')}`;
-                }
-                
-                document.getElementById('detailTitle').textContent = title;
-                document.getElementById('detailContent').innerHTML = html;
-                
-                document.getElementById('overlay').classList.add('active');
-                document.getElementById('detailPanel').classList.add('active');
-            }
-        }
-        
-        function closeDetail() {
-            document.getElementById('overlay').classList.remove('active');
-            document.getElementById('detailPanel').classList.remove('active');
-            document.querySelectorAll('tbody tr').forEach(tr => tr.classList.remove('highlight'));
-            document.querySelectorAll('tbody td').forEach(td => td.classList.remove('highlight-cell'));
-        }
-        
-        // Initialize
-        initPyodide().then(() => {
-            console.log('System ready');
-            // Auto-link all elements with auto-link-refs class after Pyodide loads
-            document.querySelectorAll('.auto-link-refs').forEach(el => {
-                autoLinkReferences(el);
-            });
+        tr.classList.toggle('filtered-out',!result);
+    });
+    updateRowCounts();showToast(`${tid} filter applied`);
+}
+
+// SORTING
+function setupSort(){$$('th').forEach(th=>th.onclick=()=>{const t=th.closest('table'),ci=+th.dataset.col,id=t.id;const dir=sortState[id]?.col===ci&&sortState[id].dir==='asc'?'desc':'asc';sortState[id]={col:ci,dir};t.querySelectorAll('th').forEach(x=>x.classList.remove('sorted','asc','desc'));th.classList.add('sorted',dir);const rows=[...t.querySelectorAll('tbody tr')];rows.sort((a,b)=>{let va=a.cells[ci].textContent,vb=b.cells[ci].textContent;const na=parseFloat(va.replace(/[^0-9.-]/g,'')),nb=parseFloat(vb.replace(/[^0-9.-]/g,''));if(!isNaN(na)&&!isNaN(nb))return dir==='asc'?na-nb:nb-na;return dir==='asc'?va.localeCompare(vb):vb.localeCompare(va);});rows.forEach(r=>t.querySelector('tbody').appendChild(r));});}
+
+// EXPORT
+function getTableData(tid){const t=$(`#${tid}`);return{h:[...t.querySelectorAll('th')].map(x=>x.textContent.replace('↕','').trim()),r:[...t.querySelectorAll('tbody tr')].filter(x=>!x.classList.contains('filtered-out')).map(r=>[...r.cells].map(c=>c.textContent))};}
+function exportTable(tid,fmt){
+    const{h,r}=getTableData(tid);let content,ext;
+    if(fmt==='json'){content=JSON.stringify(r.map(row=>Object.fromEntries(h.map((k,i)=>[k,row[i]]))),null,2);ext='json';}
+    else if(fmt==='csv'){content=[h.join(','),...r.map(row=>row.map(c=>`"${c.replace(/"/g,'""')}"`).join(','))].join('\n');ext='csv';}
+    else if(fmt==='tsv'){content=[h.join('\t'),...r.map(row=>row.join('\t'))].join('\n');ext='tsv';}
+    else{content=`|${h.join('|')}|\n|${h.map(()=>'---').join('|')}|\n${r.map(row=>`|${row.join('|')}|`).join('\n')}`;ext='md';}
+    const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content]));a.download=`${tid}.${ext}`;a.click();closeAllDD();showToast(`Exported ${fmt.toUpperCase()}`);
+}
+function resetTable(tid){
+    const t=$(`#${tid}`);
+    [...t.querySelectorAll('tbody tr')].forEach(r=>r.classList.remove('filtered-out','highlight'));
+    // Clear filter conditions
+    if(tableFilters[tid]){tableFilters[tid].conditions=[];$(`#filter-rows-${tid}`).innerHTML='';}
+    delete sortState[tid];
+    t.querySelectorAll('th').forEach(x=>x.classList.remove('sorted','asc','desc'));
+    updateRowCounts();showToast(`${tid} reset`);
+}
+function updateRowCounts(){$$('table').forEach(t=>{const el=$(`#count-${t.id}`);if(el)el.textContent=[...t.querySelectorAll('tbody tr')].filter(r=>!r.classList.contains('filtered-out')).length;});}
+
+// DROPDOWNS
+function toggleDropdown(id){const el=$(`#${id}`);const was=el.classList.contains('open');closeAllDD();if(!was)el.classList.add('open');}
+function closeAllDD(){$$('.dropdown,.export-dropdown').forEach(d=>d.classList.remove('open'));}
+document.onclick=e=>{if(!e.target.closest('.dropdown,.export-dropdown'))closeAllDD();};
+
+// TABLE SELECTOR
+function buildMenu(){
+    const m=$('#tableMenu');
+    m.innerHTML='<div class="dropdown-item"><input type="checkbox" id="chkAll"><span><b>All Tables</b></span></div>';
+    $$('.table-section').forEach(s=>{
+        const id=s.id.replace('sec-','');
+        const t=s.querySelector('h3')?.textContent||id;
+        // Find metadata alias for this table
+        const alias=Object.entries(tableMeta).find(([k,v])=>v===id&&k.length<=3&&isNaN(k))?.[0]||'';
+        m.innerHTML+=`<div class="dropdown-item"><input type="checkbox" data-sec="${s.id}"><span>${t}</span><code>${id}${alias?' / '+alias:''}</code></div>`;
+    });
+    // Fix: Properly bind All Tables checkbox
+    const chkAll=$('#chkAll');
+    chkAll.onclick=e=>{
+        e.stopPropagation();
+        const isChecked=chkAll.checked;
+        $$('#tableMenu input[data-sec]').forEach(c=>{
+            c.checked=isChecked;
+            $(`#${c.dataset.sec}`)?.classList.toggle('visible',isChecked);
         });
-        
-        // Auto-detect and convert I(...) and R(...) patterns to links
-        function autoLinkReferences(container) {
-            // Process text nodes only to avoid breaking existing HTML
-            const walker = document.createTreeWalker(
-                container,
-                NodeFilter.SHOW_TEXT,
-                null,
-                false
-            );
-            
-            const textNodes = [];
-            while (walker.nextNode()) {
-                textNodes.push(walker.currentNode);
-            }
-            
-            // Regex to match I(...) or R(...) patterns
-            const refPattern = /([IR]\([^)]+\))/g;
-            
-            textNodes.forEach(textNode => {
-                const text = textNode.textContent;
-                if (refPattern.test(text)) {
-                    // Reset regex lastIndex
-                    refPattern.lastIndex = 0;
-                    
-                    const fragment = document.createDocumentFragment();
-                    let lastIndex = 0;
-                    let match;
-                    
-                    while ((match = refPattern.exec(text)) !== null) {
-                        // Add text before match
-                        if (match.index > lastIndex) {
-                            fragment.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
-                        }
-                        
-                        // Create link for the reference
-                        const link = document.createElement('a');
-                        link.className = 'link';
-                        link.setAttribute('data-ref', match[1]);
-                        link.textContent = match[1];
-                        link.href = '#';
-                        fragment.appendChild(link);
-                        
-                        lastIndex = match.index + match[0].length;
-                    }
-                    
-                    // Add remaining text
-                    if (lastIndex < text.length) {
-                        fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
-                    }
-                    
-                    // Replace the text node with the fragment
-                    textNode.parentNode.replaceChild(fragment, textNode);
-                }
-            });
-            
-            // Re-attach event listeners to new links
-            setupEventListeners();
-        }
-        
-        // Load and render markdown content from external file
-        async function loadMarkdownFile(url, targetElementId) {
-            try {
-                const response = await fetch(url);
-                if (!response.ok) throw new Error(`Failed to load ${url}`);
-                const markdown = await response.text();
-                renderMarkdown(markdown, targetElementId);
-            } catch (error) {
-                console.error('Error loading markdown file:', error);
-            }
-        }
-        
-        // Load and execute external JS file containing text
-        async function loadTextFile(url, targetElementId) {
-            try {
-                const response = await fetch(url);
-                if (!response.ok) throw new Error(`Failed to load ${url}`);
-                const text = await response.text();
-                
-                const targetElement = document.getElementById(targetElementId);
-                if (targetElement) {
-                    targetElement.innerHTML = text;
-                    autoLinkReferences(targetElement);
-                }
-            } catch (error) {
-                console.error('Error loading text file:', error);
-            }
-        }
-        
-        // Enhanced markdown to HTML converter with full support
-        function renderMarkdown(markdown, targetElementId) {
-            const targetElement = document.getElementById(targetElementId);
-            if (!targetElement) return;
-            
-            let html = markdown
-                // Code blocks (``` ```)
-                .replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code class="language-$1">$2</code></pre>')
-                // Inline code
-                .replace(/`([^`]+)`/g, '<code>$1</code>')
-                // Headers (must be before other processing)
-                .replace(/^#### (.*$)/gim, '<h4>$1</h4>')
-                .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-                .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-                .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-                // Horizontal rule
-                .replace(/^---$/gim, '<hr>')
-                // Bold and Italic combined
-                .replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>')
-                // Bold
-                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                .replace(/__(.*?)__/g, '<strong>$1</strong>')
-                // Italic
-                .replace(/\*(.*?)\*/g, '<em>$1</em>')
-                .replace(/_(.*?)_/g, '<em>$1</em>')
-                // Strikethrough
-                .replace(/~~(.*?)~~/g, '<del>$1</del>')
-                // Blockquotes
-                .replace(/^> (.*$)/gim, '<blockquote>$1</blockquote>')
-                // Unordered lists
-                .replace(/^\s*[-*+] (.*$)/gim, '<li>$1</li>')
-                // Ordered lists
-                .replace(/^\s*\d+\. (.*$)/gim, '<li>$1</li>')
-                // Links [text](url)
-                .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>')
-                // Images ![alt](url)
-                .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" style="max-width:100%">')
-                // Line breaks / paragraphs
-                .replace(/\n\n+/g, '</p><p>')
-                .replace(/\n/g, '<br>');
-            
-            // Wrap consecutive <li> in <ul>
-            html = html.replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>');
-            // Clean up multiple <ul> tags
-            html = html.replace(/<\/ul>\s*<ul>/g, '');
-            
-            // Wrap consecutive blockquotes
-            html = html.replace(/(<blockquote>.*<\/blockquote>)/gs, function(match) {
-                return match.replace(/<\/blockquote>\s*<blockquote>/g, '<br>');
-            });
-            
-            // Wrap in paragraph tags
-            html = '<p>' + html + '</p>';
-            
-            // Clean up empty paragraphs
-            html = html.replace(/<p>\s*<\/p>/g, '');
-            html = html.replace(/<p>\s*(<h[1-6]>)/g, '$1');
-            html = html.replace(/(<\/h[1-6]>)\s*<\/p>/g, '$1');
-            html = html.replace(/<p>\s*(<ul>)/g, '$1');
-            html = html.replace(/(<\/ul>)\s*<\/p>/g, '$1');
-            html = html.replace(/<p>\s*(<pre>)/g, '$1');
-            html = html.replace(/(<\/pre>)\s*<\/p>/g, '$1');
-            html = html.replace(/<p>\s*(<hr>)\s*<\/p>/g, '$1');
-            html = html.replace(/<p>\s*(<blockquote>)/g, '$1');
-            html = html.replace(/(<\/blockquote>)\s*<\/p>/g, '$1');
-            
-            targetElement.innerHTML = html;
-            autoLinkReferences(targetElement);
-        }
-        
-        // Process inline text and return HTML with auto-linked references
-        function processInlineText(text) {
-            const refPattern = /([IR]\([^)]+\))/g;
-            return text.replace(refPattern, '<a class="link" data-ref="$1" href="#">$1</a>');
-        }
-        
-        // Process content on page load - auto-link any existing content
-        document.addEventListener('DOMContentLoaded', () => {
-            // Auto-link references in any element with class 'auto-link-refs'
-            document.querySelectorAll('.auto-link-refs').forEach(el => {
-                autoLinkReferences(el);
-            });
-            
-            // Demo: Load sample markdown content
-            const sampleMarkdown = `
-# Sample Markdown Document
-
-This document demonstrates **markdown support** with *automatic reference linking*.
-
-## Validation Results
-
-The validation process reviewed entry I(1,1.0) successfully. Item I(1,2.a) showed improvement. Test I(1,3.0.a.P) needs review.
-
-### Status Summary
-
-- Check status: R(1,2,3)
-- Compare results: I(2,001+002,3)
-- Full range: R(1,1-3,3)
-
-## Experiment Data
-
-> The experiments I(2,001-003,3) showed promising results across all test groups.
-
-For detailed comparison, see I(2,001+002,3+4) which includes both Result and Remark columns.
-
----
-
-**Note:** All references like R(2,1+2+3) are automatically converted to clickable links!
-`;
-            renderMarkdown(sampleMarkdown, 'markdownContent');
-        });
-        
-        // Detect and render tables defined on window by external JS files (e.g., datanoteU14.js) 🔧
-        function detectAndRenderTablesFromWindow() {
-            const container = document.querySelector('.container');
-            if (!container) return;
-
-            function extractFirstJsonArrayFrom(str, startIdx) {
-                // Find matching bracket for the first '[' at or after startIdx
-                const idx = str.indexOf('[', startIdx);
-                if (idx === -1) return null;
-                let depth = 0;
-                for (let i = idx; i < str.length; i++) {
-                    const ch = str[i];
-                    if (ch === '[') depth++;
-                    else if (ch === ']') {
-                        depth--;
-                        if (depth === 0) {
-                            return str.slice(idx, i + 1);
-                        }
-                    }
-                }
-                return null;
-            }
-
-            for (const key of Object.keys(window)) {
-                try {
-                    const val = window[key];
-                    if (val === undefined || val === null) continue;
-
-                    // Case A: string that contains markers like "#Table14:Title" followed by JSON
-                    if (typeof val === 'string') {
-                        const regex = /#\s*Table\s*(\d+)\s*:\s*([^\n\r]+)/gi;
-                        let m;
-                        while ((m = regex.exec(val)) !== null) {
-                            const tableNum = m[1];
-                            const title = m[2].trim();
-                            const jsonPart = extractFirstJsonArrayFrom(val, regex.lastIndex);
-                            if (jsonPart) {
-                                try {
-                                    const data = JSON.parse(jsonPart);
-                                    registerTableFromJSON(tableNum, title, data, container);
-                                } catch (e) {
-                                    // ignore parse errors for that block
-                                }
-                            }
-                        }
-                    }
-
-                    // Case B: arrays assigned directly e.g., window.table14 = [{...}]
-                    else if (Array.isArray(val)) {
-                        const m2 = key.match(/table\s*(\d+)/i) || key.match(/^table(\d+)/i);
-                        let tableNum = null;
-                        if (m2) tableNum = m2[1];
-                        if (tableNum) {
-                            const title = (window[key + 'Title'] || window[key + 'Name'] || key).toString();
-                            registerTableFromJSON(tableNum, title, val, container);
-                        }
-                    }
-                } catch (err) {
-                    // ignore access/parse errors and continue
-                }
-            }
-
-            // Re-run auto-linking on all auto-link-refs and event listeners to ensure interactivity
-            document.querySelectorAll('.auto-link-refs').forEach(el => autoLinkReferences(el));
-            setupEventListeners();
-        }
-
-        function registerTableFromJSON(tableNum, title, dataArray, container) {
-            const tableId = 'T' + tableNum;
-            if (document.getElementById(tableId)) return; // do not duplicate
-            if (!Array.isArray(dataArray) || dataArray.length === 0) return;
-
-            const section = document.createElement('div');
-            section.className = 'table-section';
-
-            const h3 = document.createElement('h3');
-            h3.textContent = `Table ${tableNum}: ${title}`;
-            section.appendChild(h3);
-
-            const table = document.createElement('table');
-            table.id = tableId;
-
-            // Headers from first object's keys (preserve insertion order)
-            const first = dataArray[0];
-            const headers = Object.keys(first);
-
-            const thead = document.createElement('thead');
-            const trh = document.createElement('tr');
-            headers.forEach(h => {
-                const th = document.createElement('th');
-                th.textContent = h;
-                trh.appendChild(th);
-            });
-            thead.appendChild(trh);
-            table.appendChild(thead);
-
-            const tbody = document.createElement('tbody');
-            dataArray.forEach(obj => {
-                const tr = document.createElement('tr');
-                headers.forEach(h => {
-                    const td = document.createElement('td');
-                    td.textContent = obj[h] !== undefined ? obj[h] : '';
-                    tr.appendChild(td);
-                });
-                tbody.appendChild(tr);
-            });
-            table.appendChild(tbody);
-
-            section.appendChild(table);
-
-            // Insert before the legend if present to keep main content order, otherwise append
-            const legend = document.querySelector('.legend');
-            if (legend && legend.parentNode) {
-                legend.parentNode.insertBefore(section, legend);
-            } else {
-                container.appendChild(section);
-            }
-        }
-
-        // Internal registry for tables (includes inline and external)
-        window.TableRefSystem = window.TableRefSystem || {};
-        window.TableRefSystem._registeredTables = window.TableRefSystem._registeredTables || [];
-
-        function addRegisteredTable(tableId, title, sectionEl) {
-            // Avoid duplicates
-            if (window.TableRefSystem._registeredTables.find(r => r.tableId === tableId)) return;
-            window.TableRefSystem._registeredTables.push({ tableId, title, sectionEl });
-            updateTableListUI();
-        }
-
-        function refreshDropdownSummary() {
-            const btn = document.getElementById('tableDropdownBtn');
-            const list = document.getElementById('tableList');
-            if (!btn || !list) return;
-            const total = list.querySelectorAll('.table-option input[type="checkbox"]:not(#tableAllCheckbox)').length;
-            const checked = list.querySelectorAll('.table-option input[type="checkbox"]:not(#tableAllCheckbox):checked').length;
-            if (total === 0) btn.textContent = 'No tables';
-            else if (checked === 0) btn.textContent = 'Select tables ▾';
-            else if (checked === total) btn.textContent = `All (${checked}) ▾`;
-            else btn.textContent = `Selected: ${checked} ▾`;
-        }
-
-        function updateTableListUI() {
-            const list = document.getElementById('tableList');
-            if (!list) return;
-            // Preserve current selections
-            const prevSelected = new Set(Array.from(list.querySelectorAll('.table-option input[type="checkbox"]:not(#tableAllCheckbox):checked')).map(i => i.getAttribute('data-table')));
-
-            // Clear
-            list.innerHTML = '';
-
-            // Create All option at the top
-            const allDiv = document.createElement('div');
-            allDiv.className = 'table-option';
-            allDiv.innerHTML = `<input type="checkbox" id="tableAllCheckbox"> <label for="tableAllCheckbox"><strong>All</strong></label>`;
-            list.appendChild(allDiv);
-
-            for (const reg of window.TableRefSystem._registeredTables) {
-                const div = document.createElement('div');
-                div.className = 'table-option';
-                div.innerHTML = `<input type="checkbox" id="chk_${reg.tableId}" data-table="${reg.tableId}"> <label for="chk_${reg.tableId}">${reg.title} (<code>${reg.tableId}</code>)</label>`;
-                list.appendChild(div);
-
-                // Restore previous checked state or default based on section visibility
-                const chk = div.querySelector('input[type="checkbox"]');
-                const isVisible = reg.sectionEl && !reg.sectionEl.classList.contains('hidden-table');
-                chk.checked = prevSelected.has(reg.tableId) || isVisible;
-
-                // Make the entire option clickable and prevent the dropdown from closing
-                div.addEventListener('click', (e) => {
-                    // If the actual input was clicked, let the change event handle it
-                    if (e.target && e.target.tagName && e.target.tagName.toLowerCase() === 'input') return;
-                    // Avoid toggling when clicking links or code elements inside label
-                    if (e.target && (e.target.tagName.toLowerCase() === 'a' || e.target.tagName.toLowerCase() === 'code')) return;
-
-                    const checkbox = div.querySelector('input[type="checkbox"]');
-                    if (!checkbox) return;
-                    checkbox.checked = !checkbox.checked;
-                    checkbox.dispatchEvent(new Event('change', { bubbles: true }));
-                    e.stopPropagation();
-                });
-            }
-
-            // Attach event listeners for table checkboxes (exclude All)
-            list.querySelectorAll('.table-option input[type="checkbox"]:not(#tableAllCheckbox)').forEach(chk => {
-                // Remove duplicate handlers by replacing with a clone
-                const newChk = chk.cloneNode(true);
-                chk.parentNode.replaceChild(newChk, chk);
-            });
-
-            list.querySelectorAll('.table-option input[type="checkbox"]:not(#tableAllCheckbox)').forEach(chk => {
-                chk.addEventListener('change', (e) => {
-                    const tableId = chk.getAttribute('data-table');
-                    toggleTableVisibility(tableId, chk.checked);
-                    // Update All checkbox state based on table checkboxes only
-                    const total = list.querySelectorAll('.table-option input[type="checkbox"]:not(#tableAllCheckbox)').length;
-                    const checked = list.querySelectorAll('.table-option input[type="checkbox"]:not(#tableAllCheckbox):checked').length;
-                    const allChk = document.getElementById('tableAllCheckbox');
-                    if (allChk) allChk.checked = (total === checked && total > 0);
-
-                    // Refresh summary
-                    refreshDropdownSummary();
-                });
-            });
-
-            // Setup All checkbox change handler
-            const allChk = document.getElementById('tableAllCheckbox');
-            if (allChk) {
-                // Make label clicks also toggle All reliably
-                const allLabel = list.querySelector('label[for="tableAllCheckbox"]');
-                if (allLabel) {
-                    allLabel.addEventListener('click', (e) => {
-                        e.preventDefault(); // prevent any default double handling
-                        allChk.checked = !allChk.checked;
-                        allChk.dispatchEvent(new Event('change'));
-                    });
-                }
-
-                allChk.addEventListener('change', () => {
-                    const tableChks = list.querySelectorAll('.table-option input[type="checkbox"]:not(#tableAllCheckbox)');
-                    tableChks.forEach(c => {
-                        c.checked = allChk.checked;
-                        c.dispatchEvent(new Event('change'));
-                    });
-                    refreshDropdownSummary();
-                });
-
-                // Sync All checkbox with current table checkboxes
-                const total = list.querySelectorAll('.table-option input[type="checkbox"]:not(#tableAllCheckbox)').length;
-                const checked = list.querySelectorAll('.table-option input[type="checkbox"]:not(#tableAllCheckbox):checked').length;
-                allChk.checked = (total === checked && total > 0);
-
-                if (allChk.checked) {
-                    list.querySelectorAll('.table-option input[type="checkbox"]:not(#tableAllCheckbox)').forEach(c => {
-                        if (!c.checked) {
-                            c.checked = true;
-                            c.dispatchEvent(new Event('change'));
-                        }
-                    });
-                }
-            }
-
-            // Refresh dropdown button text
-            refreshDropdownSummary();
-        }
-
-        function toggleTableVisibility(tableId, visible) {
-            const reg = window.TableRefSystem._registeredTables.find(r => r.tableId === tableId);
-            if (!reg || !reg.sectionEl) return;
-            if (visible) reg.sectionEl.classList.remove('hidden-table');
-            else reg.sectionEl.classList.add('hidden-table');
-        }
-
-        function collectInlineTables() {
-            // Find existing .table-section blocks with table ids
-            const sections = document.querySelectorAll('.table-section');
-            sections.forEach(sec => {
-                const table = sec.querySelector('table');
-                if (!table || !table.id) return;
-                const titleEl = sec.querySelector('h3');
-                const title = titleEl ? titleEl.textContent.trim() : table.id;
-                // Hide by default
-                sec.classList.add('hidden-table');
-                addRegisteredTable(table.id, title, sec);
-            });
-        }
-
-        function initTableSelector() {
-            const wrapper = document.getElementById('tableDropdownWrapper');
-            const btn = document.getElementById('tableDropdownBtn');
-            const dropdown = document.getElementById('tableDropdown');
-
-            if (!wrapper || !btn || !dropdown) return;
-
-            btn.addEventListener('click', (e) => {
-                wrapper.classList.toggle('open');
-            });
-
-            // Close on click outside
-            document.addEventListener('click', (e) => {
-                if (!wrapper.contains(e.target)) wrapper.classList.remove('open');
-            });
-        }
-
-        // Patch registerTableFromJSON to hide tables by default and register them
-        const _origRegisterTableFromJSON = registerTableFromJSON;
-        registerTableFromJSON = function(tableNum, title, dataArray, container) {
-            _origRegisterTableFromJSON(tableNum, title, dataArray, container);
-            const tableId = 'T' + tableNum;
-            const sec = document.getElementById(tableId)?.closest('.table-section') || document.getElementById(tableId)?.parentElement;
-            const sectionEl = document.getElementById(tableId)?.closest('.table-section');
-            if (sectionEl) {
-                sectionEl.classList.add('hidden-table');
-                addRegisteredTable(tableId, `Table ${tableNum}: ${title}`, sectionEl);
-            }
+    };
+    $$('#tableMenu input[data-sec]').forEach(c=>{
+        c.onclick=e=>e.stopPropagation();
+        c.onchange=()=>{
+            $(`#${c.dataset.sec}`)?.classList.toggle('visible',c.checked);
+            // Update All checkbox state
+            const allChecked=[...$$('#tableMenu input[data-sec]')].every(x=>x.checked);
+            const noneChecked=[...$$('#tableMenu input[data-sec]')].every(x=>!x.checked);
+            chkAll.checked=allChecked;
+            chkAll.indeterminate=!allChecked&&!noneChecked;
         };
+    });
+}
+function toggleTbl(c){$(`#${c.dataset.sec}`)?.classList.toggle('visible',c.checked);}
 
-        // Ensure inline tables are collected and UI initialized after DOM ready
-        document.addEventListener('DOMContentLoaded', () => {
-            collectInlineTables();
-            initTableSelector();
-            updateTableListUI();
-        });
+// TOAST
+function showToast(msg){const t=$('#toast');$('#toastMsg').textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
 
-        // Ensure we re-populate list after external tables are registered
-        const _origDetect = detectAndRenderTablesFromWindow;
-        detectAndRenderTablesFromWindow = function() {
-            _origDetect();
-            // After registering external tables, collect their sections and add to list
-            window.TableRefSystem._registeredTables.forEach(r => {
-                const sec = document.getElementById(r.tableId)?.closest('.table-section');
-                if (sec) {
-                    sec.classList.add('hidden-table');
-                    r.sectionEl = sec;
-                }
-            });
-            updateTableListUI();
-        };
+// REFERENCE SYSTEM
+const tooltip=$('#tooltip'),modal=$('#modal');
+function parseRef(ref){const m=ref.match(/([IR])\(([^,]+),([^,)]+)(?:,([^)]+))?\)/);if(!m)return null;const[_,type,tRef,rowStr,colStr]=m;
+// Resolve table reference using metadata
+const tKey=tRef.trim();
+const tableId=tableMeta[tKey]||tableMeta[tKey.toUpperCase()]||$(`#T${tKey}`)?.id||$$('table')[parseInt(tKey)-1]?.id;
+const expand=(s,num)=>{if(!s)return{v:null,g:[],c:false};if(s.toLowerCase()==='all')return{v:['all'],isAll:true,g:[],c:false};const g=[],v=[];s.split('+').forEach(p=>{if(p.includes('*')){const st=v.length;p.split('*').forEach(x=>v.push(...expR(x,num)));g.push({s:st,e:v.length-1});}else v.push(...expR(p,num));});return{v,g,c:g.length>0};};
+const expR=(p,num)=>{if(!p.includes('-'))return[p.trim()];const[a,b]=p.split('-').map(x=>x.trim());if(num){const arr=[];for(let i=+a;i<=+b;i++)arr.push(String(i).padStart(a.length,'0'));return arr;}const ma=a.match(/^(.*?)(\d+)$/),mb=b.match(/^(.*?)(\d+)$/);if(ma&&mb&&ma[1]===mb[1]){const arr=[];for(let i=+ma[2];i<=+mb[2];i++)arr.push(ma[1]+String(i).padStart(ma[2].length,'0'));return arr;}return[p];};
+const rows=expand(rowStr,type==='R'),cols=expand(colStr,true);return{tableId,type,rows,cols:cols.v?.map(Number),isAllCols:cols.isAll};}
+function findRows(p){const t=$(`#${p.tableId}`);if(!t)return[];const tb=t.querySelector('tbody');if(p.rows.isAll)return[...tb.rows].map(r=>({row:r,val:r.cells[0]?.textContent}));return p.rows.v.map(v=>{const row=p.type==='R'?tb.rows[+v-1]:[...tb.rows].find(r=>r.cells[0]?.textContent===v);return row?{row,val:v}:null;}).filter(Boolean);}
+function getContent(link){const p=parseRef(link.dataset.ref),rd=findRows(p);if(!rd.length)return{p,d:[]};const h=[...$(`#${p.tableId}`).querySelectorAll('th')].map(x=>x.textContent.replace('↕','').trim());return{p,d:rd.map(({row,val})=>({id:val,cols:p.cols?p.cols.map(c=>({h:h[c-1],v:row.cells[c-1]?.textContent})):p.isAllCols?[...row.cells].map((cell,i)=>({h:h[i],v:cell.textContent})):[{h:h[1],v:row.cells[1]?.textContent}]}))};}
+function showTooltip(e,link){const{d}=getContent(link);if(!d.length)return;let html=d.length===1&&d[0].cols.length===1?d[0].cols[0].v:d.map(x=>`<div class="tooltip-row">${x.id}</div>${x.cols.map(c=>`<div class="tooltip-col">${c.h}: ${c.v}</div>`).join('')}`).join('');tooltip.innerHTML=html;tooltip.style.cssText=`display:block;left:${Math.min(e.clientX,innerWidth-420)}px;top:${e.clientY+15}px`;}
+function showModal(link){const{p,d}=getContent(link);if(!d.length)return;$$('tr').forEach(r=>r.classList.remove('highlight'));$$('td').forEach(x=>x.classList.remove('highlight-cell'));let html='';d.forEach(x=>{const row=findRows(p).find(r=>r.val===x.id)?.row;row?.classList.add('highlight');if(p.cols)p.cols.forEach(c=>row?.cells[c-1]?.classList.add('highlight-cell'));else if(p.isAllCols)[...row?.cells||[]].forEach(c=>c.classList.add('highlight-cell'));html+=`<div class="detail-group"><div class="detail-group-title">${x.id}</div>${x.cols.map(c=>`<div class="detail-row highlighted"><span class="detail-label">${c.h}:</span> ${c.v}</div>`).join('')}</div>`;});$('#modalTitle').textContent=d.length===1?`Details: ${d[0].id}`:`Compare: ${d.map(x=>x.id).join(' & ')}`;$('#modalContent').innerHTML=html;modal.classList.add('active');}
+function closeModal(){modal.classList.remove('active');$$('tr').forEach(r=>r.classList.remove('highlight'));$$('td').forEach(x=>x.classList.remove('highlight-cell'));}
+function autoLink(el){const w=document.createTreeWalker(el,NodeFilter.SHOW_TEXT);const nodes=[];while(w.nextNode())nodes.push(w.currentNode);nodes.forEach(n=>{const t=n.textContent,pat=/([IR]\([^)]+\))/g;if(!pat.test(t))return;const frag=document.createDocumentFragment();let last=0,m;pat.lastIndex=0;while((m=pat.exec(t))){if(m.index>last)frag.appendChild(document.createTextNode(t.slice(last,m.index)));const a=document.createElement('a');a.className='link';a.dataset.ref=m[1];a.textContent=m[1];a.href='#';frag.appendChild(a);last=m.index+m[0].length;}if(last<t.length)frag.appendChild(document.createTextNode(t.slice(last)));n.parentNode.replaceChild(frag,n);});}
+function setupLinks(){$$('.link').forEach(l=>{l.onmouseenter=e=>showTooltip(e,l);l.onmouseleave=()=>tooltip.style.display='none';l.onclick=e=>{e.preventDefault();showModal(l);};});}
 
-        // Expose functions globally for external use
-        window.TableRefSystem = Object.assign(window.TableRefSystem, {
-            autoLinkReferences,
-            loadMarkdownFile,
-            loadTextFile,
-            renderMarkdown,
-            processInlineText,
-            registerWindowTables: detectAndRenderTablesFromWindow,
-            registerTableFromJSON,
-            addRegisteredTable,
-            _registeredTables: window.TableRefSystem._registeredTables
-        });
-    </script>
-          <script src="datanoteU14.js"></script>
-          <script>
-            // After loading external scripts, scan window for table definitions and render them.
-            // Retry on load and after a short delay to cover timing edge-cases where scripts run slightly later.
-            function tryRegisterWindowTables() {
-                if (window.TableRefSystem && typeof window.TableRefSystem.registerWindowTables === 'function') {
-                    window.TableRefSystem.registerWindowTables();
-                }
-            }
-            tryRegisterWindowTables();
-            window.addEventListener('load', tryRegisterWindowTables);
-            setTimeout(tryRegisterWindowTables, 250);
-          </script>
+// INIT
+document.addEventListener('DOMContentLoaded',()=>{$$('.auto-link').forEach(autoLink);setupLinks();buildMenu();setupSort();updateRowCounts();});
+</script>
 </body>
 </html>
